@@ -1,6 +1,6 @@
 Vagrant::Config.run do |config|
   # Setup the box
-  config.vm.box = "ubuntu-precise-64"
+  config.vm.box = "ubuntu-precise-32"
 
   # Enable the Puppet provisioner
   config.vm.provision :puppet
