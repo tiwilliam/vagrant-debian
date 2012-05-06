@@ -3,7 +3,7 @@ About
 
 This script will: 
 
- 1. download the Ubuntu 12.04 alternate server, 32bit iso
+ 1. download the Debian Squeeze, 32bit iso netinst
  2. ... do some magic to turn it into a vagrant box file
  3. output package.box 
 
@@ -16,6 +16,16 @@ Usage
  mkisofs, install macports, then: sudo port install cdrtools
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Joonas' notes
+-------------
+
+Forked off https://github.com/cal/vagrant-ubuntu-precise-64
+
+Made it:
+
+- build a 32 bit Debian stable instead of Ubuntu.
+- zero the image before exporting a package (requires a lot of disk space)
 
 Ben's notes
 -----------

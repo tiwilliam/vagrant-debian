@@ -3,7 +3,7 @@
 # make sure we have dependencies 
 hash mkisofs 2>/dev/null || { echo >&2 "ERROR: mkisofs not found.  Aborting."; exit 1; }
 
-BOX="ubuntu-precise-32"
+BOX="debian-squeeze-32"
 
 # location, location, location
 FOLDER_BASE=`pwd`
@@ -27,15 +27,14 @@ chmod -R u+w "${FOLDER_ISO_INITRD}"
 rm -rf "${FOLDER_ISO_INITRD}"
 mkdir -p "${FOLDER_ISO_INITRD}"
 
-ISO_URL="http://releases.ubuntu.com/precise/ubuntu-12.04-alternate-i386.iso"
+ISO_URL="http://ftp.fi.debian.org/debian-cd/6.0.4/i386/iso-cd/debian-6.0.4-i386-netinst.iso"
 ISO_FILENAME="${FOLDER_ISO}/`basename ${ISO_URL}`"
-ISO_MD5="bcee4c03b704a9b62988505b7d8f3069"
-INITRD_FILENAME="${FOLDER_ISO}/initrd.gz"
+ISO_MD5="38bf1278cc5c98c5fa09dd0973ebc9f5"
 
 ISO_GUESTADDITIONS="/Applications/VirtualBox.app/Contents/MacOS/VBoxGuestAdditions.iso"
 
 # download the installation disk if you haven't already or it is corrupted somehow
-echo "Downloading ubuntu-12.04-alternate-i386.iso ..."
+echo "Downloading debian-6.0.4-i386-netinst.iso ..."
 if [ ! -e "${ISO_FILENAME}" ] 
 then
    curl --output "${ISO_FILENAME}" -L "${ISO_URL}"
@@ -57,28 +56,28 @@ if [ ! -e "${FOLDER_ISO}/custom.iso" ]; then
 
   # backup initrd.gz
   echo "Backing up current init.rd ..."
-  chmod u+w "${FOLDER_ISO_CUSTOM}/install" "${FOLDER_ISO_CUSTOM}/install/initrd.gz"
-  mv "${FOLDER_ISO_CUSTOM}/install/initrd.gz" "${FOLDER_ISO_CUSTOM}/install/initrd.gz.org"
+  chmod u+w "${FOLDER_ISO_CUSTOM}/install.386" "${FOLDER_ISO_CUSTOM}/install.386/initrd.gz"
+  mv "${FOLDER_ISO_CUSTOM}/install.386/initrd.gz"{,.org}
 
   # stick in our new initrd.gz
   echo "Installing new initrd.gz ..."
   cd "${FOLDER_ISO_INITRD}"
-  gunzip -c "${FOLDER_ISO_CUSTOM}/install/initrd.gz.org" | cpio -id
+  gunzip -c "${FOLDER_ISO_CUSTOM}/install.386/initrd.gz.org" | cpio -id
   cd "${FOLDER_BASE}"
   cp preseed.cfg "${FOLDER_ISO_INITRD}/preseed.cfg"
   cd "${FOLDER_ISO_INITRD}"
-  find . | cpio --create --format='newc' | gzip  > "${FOLDER_ISO_CUSTOM}/install/initrd.gz"
+  find . | cpio --create --format='newc' | gzip  > "${FOLDER_ISO_CUSTOM}/install.386/initrd.gz"
 
   # clean up permissions
   echo "Cleaning up Permissions ..."
-  chmod u-w "${FOLDER_ISO_CUSTOM}/install" "${FOLDER_ISO_CUSTOM}/install/initrd.gz" "${FOLDER_ISO_CUSTOM}/install/initrd.gz.org"
+  chmod u-w "${FOLDER_ISO_CUSTOM}/install.386/"{,initrd.gz,initrd.gz.org}
 
   # replace isolinux configuration
   echo "Replacing isolinux config ..."
   cd "${FOLDER_BASE}"
   chmod u+w "${FOLDER_ISO_CUSTOM}/isolinux" "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"
   rm "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"
-  cp isolinux.cfg "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"  
+  cp isolinux.cfg "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"
   chmod u+w "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.bin"
 
   # add late_command script
@@ -87,7 +86,7 @@ if [ ! -e "${FOLDER_ISO}/custom.iso" ]; then
   cp "${FOLDER_BASE}/late_command.sh" "${FOLDER_ISO_CUSTOM}"
   
   echo "Running mkisofs ..."
-  mkisofs -r -V "Custom Ubuntu Install CD" \
+  mkisofs -r -V "Custom Debian Install CD" \
     -cache-inodes -quiet \
     -J -l -b isolinux/isolinux.bin \
     -c isolinux/boot.cat -no-emul-boot \
@@ -101,7 +100,7 @@ echo "Creating VM Box..."
 if ! VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
   VBoxManage createvm \
     --name "${BOX}" \
-    --ostype Ubuntu \
+    --ostype Debian \
     --register \
     --basefolder "${FOLDER_VBOX}"
 
@@ -154,7 +153,7 @@ if ! VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
     echo -n "."
   done
   echo ""
-
+  
   # Forward SSH
   VBoxManage modifyvm "${BOX}" \
     --natpf1 "guestssh,tcp,,2222,,22"
@@ -174,7 +173,7 @@ if ! VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
   chmod 600 "${FOLDER_BUILD}/id_rsa"
 
   # install virtualbox guest additions
-  ssh -i "${FOLDER_BUILD}/id_rsa" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 2222 vagrant@127.0.0.1 "sudo mount /dev/cdrom /media/cdrom; sudo sh /media/cdrom/VBoxLinuxAdditions.run; sudo umount /media/cdrom; sudo shutdown -h now"
+  ssh -i "${FOLDER_BUILD}/id_rsa" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 2222 vagrant@127.0.0.1 "sudo apt-get -y remove virtualbox-ose-guest* xserver* ; sudo dpkg --purge virtualbox-ose-guest* ; sudo mount /dev/cdrom /media/cdrom; sudo sh /media/cdrom/VBoxLinuxAdditions.run; sudo umount /media/cdrom; sudo shutdown -h now"
   echo -n "Waiting for machine to shut off "
   while VBoxManage list runningvms | grep "${BOX}" >/dev/null; do
     sleep 20

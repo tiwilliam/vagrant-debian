@@ -1,6 +1,6 @@
 Vagrant::Config.run do |config|
   # Setup the box
-  config.vm.box = "ubuntu-precise-32"
+  config.vm.box = "debian-squeeze-32"
 
   # Enable the Puppet provisioner
   config.vm.provision :puppet
