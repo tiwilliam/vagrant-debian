@@ -23,3 +23,5 @@ update-grub
 
 # clean up
 apt-get clean
+dd if=/dev/zero of=/zero bs=1M
+rm -f /zero
