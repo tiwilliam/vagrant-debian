@@ -7,6 +7,7 @@ softclean:
 	chmod -R u+w build
 	rm -rf build/iso/custom
 	rm -rf build/iso/initrd
+	rm -rf *.box
 
 clean:
 	@mkdir -p build
