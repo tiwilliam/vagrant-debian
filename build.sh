@@ -88,11 +88,11 @@ bsdtar -xf "${ISO_FILEPATH}" -C "${FOLDER_ISO_CUSTOM}"
 info "Customizing ISO files..."
 chmod -R u+w "${FOLDER_ISO_CUSTOM}"
 
-cd "${FOLDER_ISO_INITRD}"
+pushd "${FOLDER_ISO_INITRD}"
 	gunzip -c "${FOLDER_ISO_CUSTOM_INSTALL}/initrd.gz" | cpio -id
 	cp "${FOLDER_BASE}/conf/preseed.cfg" "${FOLDER_ISO_INITRD}/preseed.cfg"
 	find . | cpio --create --format='newc' | gzip  > "${FOLDER_ISO_CUSTOM_INSTALL}/initrd.gz"
-cd "${FOLDER_BASE}"
+popd
 
 cp "${FOLDER_BASE}/conf/late_command.sh" "${FOLDER_ISO_CUSTOM}/late_command.sh"
 cp "${FOLDER_BASE}/conf/isolinux.${ARCH}.cfg" "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"
