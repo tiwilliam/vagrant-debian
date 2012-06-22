@@ -45,7 +45,7 @@ function info {
 
 # Check if VM name is occupied
 if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
-    read -p "Do you want to delete offending ${BOX} VirtualBox VM (y/n)? "
+    read -p "Are you sure you want to destroy the '${BOX}' VM? [y/n] "
     if [ "$REPLY" == "y" ]; then
         VBoxManage unregistervm "${BOX}" --delete > /dev/null
     else
