@@ -6,7 +6,7 @@ This is what it takes to create your own Vagrant box from the Debian netinstall 
 
 Dependencies: **VirtualBox, cdrtools, vagrant**
 
-**Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack Debian ISO files. Possible solution:
+**Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack ISO files. Possible solution:
 
     brew tap homebrew/dupes
     brew install homebrew/dupes/libarchive
