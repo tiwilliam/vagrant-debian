@@ -1,6 +1,25 @@
 #!/bin/bash
 
-ARCH="amd64"
+argv=($@)
+argc=$#
+
+case ${argv[0]} in
+    64)
+        ARCH="amd64"
+        FOLDER_INSTALL="install.amd"
+    ;;
+
+    32)
+        ARCH="i386"
+        FOLDER_INSTALL="install.386"
+    ;;
+
+    *)
+        echo "usage: $0 <32|64>"
+        exit
+    ;;
+esac
+
 VERSION="6.0.5"
 BOX="debian-${VERSION}-${ARCH}"
 
@@ -15,7 +34,7 @@ FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 FOLDER_ISO="${FOLDER_BUILD}/iso"
 FOLDER_ISO_CUSTOM="${FOLDER_ISO}/custom"
 FOLDER_ISO_INITRD="${FOLDER_ISO}/initrd"
-FOLDER_ISO_CUSTOM_INSTALL="${FOLDER_ISO_CUSTOM}/install.amd"
+FOLDER_ISO_CUSTOM_INSTALL="${FOLDER_ISO_CUSTOM}/${FOLDER_INSTALL}"
 
 ISO_FILEPATH="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
 
@@ -28,26 +47,10 @@ function info {
 	echo "INFO: $1"
 }
 
-function check_deps {
-	which -s VBoxManage || {
-		abort "VirtualBox not found. Aborting."
-	}
-
-	which -s mkisofs || {
-		abort "mkisofs not found. Aborting."
-	}
-	
-	which -s bsdtar || {
-		abort "bsdtar not found. Aborting."
-	}
-
-	if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
-		abort "VM ${BOX} already exist. Aborting."
-	fi
-}
-
-info "Checking for dependencies..."
-check_deps
+# Check if VM name is occupied
+if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
+	abort "VM ${BOX} already exist. Aborting."
+fi
 
 info "Cleaning build directories..."
 mkdir -p "${FOLDER_BUILD}"
@@ -92,7 +95,7 @@ cd "${FOLDER_ISO_INITRD}"
 cd "${FOLDER_BASE}"
 
 cp "${FOLDER_BASE}/conf/late_command.sh" "${FOLDER_ISO_CUSTOM}/late_command.sh"
-cp "${FOLDER_BASE}/conf/isolinux.cfg" "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"
+cp "${FOLDER_BASE}/conf/isolinux.${ARCH}.cfg" "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"
 
 info "Packing ISO files..."
 mkisofs -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \

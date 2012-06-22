@@ -2,7 +2,7 @@ Usage
 -----
 This is what it takes to create your own Vagrant box from the Debian netinstall ISO image:
 
-    make
+    make [32 | 64]
 
 Dependencies: **VirtualBox, cdrtools, vagrant**
 
