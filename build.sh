@@ -23,17 +23,16 @@ esac
 VERSION="6.0.5"
 BOX="debian-${VERSION}-${ARCH}"
 
-DEBIAN_MIRROR="ftp.acc.umu.se"
-DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
-DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
-DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
-DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
-
 FOLDER_BASE=$(pwd)
 FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_ISO="${FOLDER_BUILD}/iso"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
+DEBIAN_MIRROR="ftp.acc.umu.se"
+DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
+DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
+DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
+DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
 
 function abort {
 	echo >&2 "ERROR: $1"
@@ -46,7 +45,12 @@ function info {
 
 # Check if VM name is occupied
 if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
-	abort "VM ${BOX} already exist. Aborting."
+    read -p "Do you want to delete offending ${BOX} VirtualBox VM (y/n)? "
+    if [ "$REPLY" == "y" ]; then
+        VBoxManage unregistervm "${BOX}" --delete > /dev/null
+    else
+        abort "VM ${BOX} already exist. Aborting."
+    fi
 fi
 
 info "Cleaning build directories..."
