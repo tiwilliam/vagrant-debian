@@ -27,16 +27,13 @@ DEBIAN_MIRROR="ftp.acc.umu.se"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
 DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
 DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
+DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
 
-FOLDER_BASE=`pwd`
+FOLDER_BASE=$(pwd)
 FOLDER_BUILD="${FOLDER_BASE}/build"
-FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 FOLDER_ISO="${FOLDER_BUILD}/iso"
-FOLDER_ISO_CUSTOM="${FOLDER_ISO}/custom"
-FOLDER_ISO_INITRD="${FOLDER_ISO}/initrd"
-FOLDER_ISO_CUSTOM_INSTALL="${FOLDER_ISO_CUSTOM}/${FOLDER_INSTALL}"
+FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
-ISO_FILEPATH="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
 
 function abort {
 	echo >&2 "ERROR: $1"
@@ -55,18 +52,18 @@ fi
 info "Cleaning build directories..."
 mkdir -p "${FOLDER_BUILD}"
 chmod -R u+w "${FOLDER_BUILD}"
-rm -rf "${FOLDER_ISO_CUSTOM}"
-rm -rf "${FOLDER_ISO_INITRD}"
+rm -rf "${FOLDER_ISO}/custom"
+rm -rf "${FOLDER_ISO}/initrd"
 
 mkdir -p "${FOLDER_VBOX}"
 mkdir -p "${FOLDER_ISO}"
-mkdir -p "${FOLDER_ISO_CUSTOM}"
-mkdir -p "${FOLDER_ISO_INITRD}"
+mkdir -p "${FOLDER_ISO}/custom"
+mkdir -p "${FOLDER_ISO}/initrd"
 
 # Download ISO if needed
 info "Downloading ${DEBIAN_ISO_NAME}..."
-if [ ! -f "${ISO_FILEPATH}" ]; then
-	curl --progress-bar -o "${ISO_FILEPATH}" -L "${DEBIAN_ISO_URL}"
+if [ ! -f "${DEBIAN_ISO_FILE}" ]; then
+	curl --progress-bar -o "${DEBIAN_ISO_FILE}" -L "${DEBIAN_ISO_URL}"
 fi
 
 # Command to get MD5 hash from server
@@ -76,34 +73,34 @@ ISO_MD5=$(curl -s "${DEBIAN_URL}/MD5SUMS" | grep "${DEBIAN_ISO_NAME}" | awk '{ p
 if [ ! "${ISO_MD5}" ]; then
 	info "Faild to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
 else
-	ISO_HASH=`md5 -q "${ISO_FILEPATH}"`
+	ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
 	if [ "${ISO_MD5}" != "${ISO_HASH}" ]; then
 		abort "MD5 does not match - expected ${ISO_MD5}. Aborting."
 	fi
 fi
 
 info "Unpacking ${DEBIAN_ISO_NAME}..."
-bsdtar -xf "${ISO_FILEPATH}" -C "${FOLDER_ISO_CUSTOM}"
+bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_ISO}/custom"
 
 info "Customizing ISO files..."
-chmod -R u+w "${FOLDER_ISO_CUSTOM}"
+chmod -R u+w "${FOLDER_ISO}/custom"
 
-pushd "${FOLDER_ISO_INITRD}"
-	gunzip -c "${FOLDER_ISO_CUSTOM_INSTALL}/initrd.gz" | cpio -id
-	cp "${FOLDER_BASE}/conf/preseed.cfg" "${FOLDER_ISO_INITRD}/preseed.cfg"
-	find . | cpio --create --format='newc' | gzip  > "${FOLDER_ISO_CUSTOM_INSTALL}/initrd.gz"
+pushd "${FOLDER_ISO}/initrd"
+	gunzip -c "${FOLDER_ISO}/custom/${FOLDER_INSTALL}/initrd.gz" | cpio -id
+	cp "${FOLDER_BASE}/conf/preseed.cfg" "${FOLDER_ISO}/initrd/preseed.cfg"
+	find . | cpio --create --format='newc' | gzip  > "${FOLDER_ISO}/custom/${FOLDER_INSTALL}/initrd.gz"
 popd
 
-cp "${FOLDER_BASE}/conf/late_command.sh" "${FOLDER_ISO_CUSTOM}/late_command.sh"
-cp "${FOLDER_BASE}/conf/isolinux.${ARCH}.cfg" "${FOLDER_ISO_CUSTOM}/isolinux/isolinux.cfg"
+cp "${FOLDER_BASE}/conf/late_command.sh" "${FOLDER_ISO}/custom/late_command.sh"
+cp "${FOLDER_BASE}/conf/isolinux.${ARCH}.cfg" "${FOLDER_ISO}/custom/isolinux/isolinux.cfg"
 
 info "Packing ISO files..."
 mkisofs -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
 	-b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
 	-boot-load-size 4 -boot-info-table -o "${FOLDER_ISO}/custom.iso" \
-	"${FOLDER_ISO_CUSTOM}"
+	"${FOLDER_ISO}/custom"
 
-chmod -R u-w "${FOLDER_ISO_CUSTOM}"
+chmod -R u-w "${FOLDER_ISO}/custom"
 
 info "Creating VM..."
 VBoxManage createvm \
@@ -157,7 +154,7 @@ info "Booting VM..."
 VBoxManage startvm "${BOX}"
 
 info "Waiting for installer..."
-while VBoxManage list runningvms | grep "${BOX}" >/dev/null; do
+while VBoxManage list runningvms | grep "${BOX}" > /dev/null; do
 	sleep 10
 done
 
