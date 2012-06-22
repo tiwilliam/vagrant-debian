@@ -1,28 +1,24 @@
-About
------
-
-This script will: 
-
- 1. download the Debian Squeeze, 32bit iso netinst
- 2. ... do some magic to turn it into a vagrant box file
- 3. output package.box 
-
 Usage
 -----
+This is what it takes to create your own Vagrant box from the Debian netinstall ISO image:
 
- > ./build.sh
+    make
 
- This should do everything you need. If you don't have 
- mkisofs, install macports, then: sudo port install cdrtools
+Dependencies: **VirtualBox, cdrtools, vagrant**
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack Debian ISO files. Possible solution:
+
+    brew tap homebrew/dupes
+    brew install homebrew/dupes/libarchive
+    cp /usr/bin/bsdtar /usr/bin/bsdtar.orig
+    cp /usr/local/bin/bsdtar /usr/bin/bsdtar
 
 William's notes
 ---------------
 
 Forked off https://github.com/joneskoo/vagrant-debian-squeeze-32
 
-Made it:
+New stuff:
 
 - 64-bit
 - Bumped to 6.0.5
@@ -30,6 +26,8 @@ Made it:
 - Run with Debian's VirtualBox toolset
 - General clean-up
 - Added Makefile
+- Check against servers MD5 sum
+- Make it easier to upgrade OS version
 
 Joonas' notes
 -------------

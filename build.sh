@@ -29,6 +29,10 @@ function info {
 }
 
 function check_deps {
+    which -s VBoxManage || {
+		abort "VirtualBox not found. Aborting."
+    }
+
 	which -s mkisofs || {
 		abort "mkisofs not found. Aborting."
 	}
