@@ -17,6 +17,18 @@ Usage
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+William's notes
+---------------
+
+Forked off https://github.com/joneskoo/vagrant-debian-squeeze-32
+
+Made it:
+
+- 64-bit
+- Depend on bsdtar. GNU tar can not extract ISO.
+- Run with Debian's VirtualBox toolset
+- Added Makefile
+
 Joonas' notes
 -------------
 
