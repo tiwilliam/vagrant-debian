@@ -10,9 +10,10 @@ build-64:
 	bash build.sh 64
 
 deps:
-	@which -s VBoxManage || { echo "ERROR: VirtualBox not found. Aborting."; exit 1; }
-	@which -s mkisofs || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
 	@which -s bsdtar || { echo "ERROR: bsdtar not found. Aborting."; exit 1; }
+	@which -s mkisofs || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
+	@which -s vagrant || { echo "ERROR: vagrant not found. Aborting."; exit 1; }
+	@which -s VBoxManage || { echo "ERROR: VirtualBox not found. Aborting."; exit 1; }
 
 softclean: fixowner
 	rm -rf build/iso/custom
