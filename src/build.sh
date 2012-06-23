@@ -58,8 +58,8 @@ mkdir -p "${FOLDER_BUILD}/custom"
 mkdir -p "${FOLDER_BUILD}/initrd"
 
 # Download ISO if needed
-info "Downloading ${DEBIAN_ISO_NAME}..."
 if [ ! -f "${DEBIAN_ISO_FILE}" ]; then
+    info "Downloading ${DEBIAN_ISO_NAME}..."
     curl --progress-bar -o "${DEBIAN_ISO_FILE}" -L "${DEBIAN_ISO_URL}"
 fi
 
