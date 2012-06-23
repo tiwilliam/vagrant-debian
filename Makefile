@@ -21,8 +21,8 @@ build-64: fixowner
 	bash src/build.sh 64
 
 softclean: fixowner
-	rm -rf build/iso/custom
-	rm -rf build/iso/initrd
+	rm -rf build/custom
+	rm -rf build/initrd
 	rm -rf *.box
 
 clean: fixowner
