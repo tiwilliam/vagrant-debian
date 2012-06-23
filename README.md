@@ -20,14 +20,14 @@ Forked off https://github.com/joneskoo/vagrant-debian-squeeze-32
 
 New stuff:
 
-- 64-bit
 - Bumped to 6.0.5
-- Depend on bsdtar. GNU tar can not extract ISO.
-- Run with Debian's VirtualBox toolset
-- General clean-up
-- Added Makefile
+- 64- and 32-bit support
+- Depend on bsdtar since GNU tar can't extract ISO
+- Install Guest Additions without reboot
 - Check against servers MD5 sum
-- Make it easier to upgrade OS version
+- Made it easier to upgrade in future
+- Makefile build system
+- Major cleanup
 
 Joonas' notes
 -------------
