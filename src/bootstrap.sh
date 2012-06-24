@@ -18,9 +18,14 @@ echo "chef chef/chef_server_url string http://127.0.0.1:4000" | debconf-set-sele
 apt-get update && apt-get install -y opscode-keyring chef
 
 # Install VirtualBox Additions
-mount /dev/cdrom /media/cdrom
-sh /media/cdrom/VBoxLinuxAdditions.run
-umount /media/cdrom
+for DEVICE in sr0 sr1; do
+    mount /dev/${DEVICE} /media/cdrom
+    if [ -f "/media/cdrom/VBoxLinuxAdditions.run" ]; then
+        sh /media/cdrom/VBoxLinuxAdditions.run
+        break
+    fi
+    umount /media/cdrom
+done
 
 # Clean up
 apt-get -y autoremove
