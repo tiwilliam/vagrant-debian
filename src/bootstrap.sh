@@ -11,7 +11,11 @@ chmod 600 /home/vagrant/.ssh/authorized_keys
 chown -R vagrant:vagrant /home/vagrant/.ssh
 
 # Install chef
-gem install chef --no-rdoc --no-ri
+echo "deb http://apt.opscode.com/ `lsb_release -cs`-0.10 main" | sudo tee /etc/apt/sources.list.d/opscode.list
+gpg --keyserver keys.gnupg.net --recv-keys 83EF826A
+gpg --export packages@opscode.com | sudo tee /etc/apt/trusted.gpg.d/opscode-keyring.gpg > /dev/null
+echo "chef chef/chef_server_url string http://127.0.0.1:4000" | debconf-set-selections
+apt-get update && apt-get install -y opscode-keyring chef
 
 # Install VirtualBox Additions
 mount /dev/cdrom /media/cdrom
