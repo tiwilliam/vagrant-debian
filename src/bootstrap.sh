@@ -18,7 +18,7 @@ echo "chef chef/chef_server_url string http://127.0.0.1:4000" | debconf-set-sele
 apt-get update && apt-get install -y opscode-keyring chef
 
 # Install guest additions on next boot
-cp /etc/rc.{local,local.bak} && cp /root/poststrap.sh /etc/
+cp /etc/rc.{local,local.bak} && cp /root/poststrap.sh /etc/rc.local
 
 # Clean up
 apt-get -y autoremove
