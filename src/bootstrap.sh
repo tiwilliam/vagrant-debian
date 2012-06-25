@@ -17,15 +17,8 @@ gpg --export packages@opscode.com | sudo tee /etc/apt/trusted.gpg.d/opscode-keyr
 echo "chef chef/chef_server_url string http://127.0.0.1:4000" | debconf-set-selections
 apt-get update && apt-get install -y opscode-keyring chef
 
-# Install VirtualBox Additions
-for DEVICE in sr0 sr1; do
-    mount /dev/${DEVICE} /media/cdrom
-    if [ -f "/media/cdrom/VBoxLinuxAdditions.run" ]; then
-        sh /media/cdrom/VBoxLinuxAdditions.run
-        break
-    fi
-    umount /media/cdrom
-done
+# Install guest additions on next boot
+cp /etc/rc.{local,local.bak} && cp /root/poststrap.sh /etc/
 
 # Clean up
 apt-get -y autoremove

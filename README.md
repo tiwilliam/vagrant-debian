@@ -23,7 +23,6 @@ New stuff:
 - Bumped to 6.0.5
 - 64- and 32-bit support
 - Depend on bsdtar since GNU tar can't extract ISO
-- Install Guest Additions without reboot
 - Check against servers MD5 sum
 - Made it easier to upgrade in future
 - Makefile build system

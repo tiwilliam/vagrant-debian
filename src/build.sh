@@ -42,6 +42,13 @@ function info {
     echo "INFO: $1"
 }
 
+function wait_for_shutdown {
+    info "Waiting for installer..."
+    while VBoxManage list runningvms | grep "${BOX}" > /dev/null; do
+        sleep 10
+    done
+}
+
 # Check if VM name is occupied
 if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
     read -p "Are you sure you want to destroy the '${BOX}' VM? [y/n] "
@@ -92,10 +99,12 @@ pushd "${FOLDER_BUILD}/initrd"
     find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
 popd
 
-cp "${FOLDER_BASE}/src/bootstrap.sh" "${FOLDER_BUILD}/custom/bootstrap.sh"
-cp "${FOLDER_BASE}/src/isolinux.cfg" "${FOLDER_BUILD}/custom/isolinux/isolinux.cfg"
+cp "${FOLDER_BASE}/src/poststrap.sh" "${FOLDER_BUILD}/custom/"
+cp "${FOLDER_BASE}/src/bootstrap.sh" "${FOLDER_BUILD}/custom/"
+cp "${FOLDER_BASE}/src/isolinux.cfg" "${FOLDER_BUILD}/custom/isolinux/"
 
-info "Setting permissions on bootstrap script..."
+info "Setting permissions on bootstrap scripts..."
+chmod 755 "${FOLDER_BUILD}/custom/poststrap.sh"
 chmod 755 "${FOLDER_BUILD}/custom/bootstrap.sh"
 
 info "Packing ISO files..."
@@ -105,75 +114,35 @@ mkisofs -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
     "${FOLDER_BUILD}/custom"
 
 info "Creating VM..."
-VBoxManage createvm \
-    --name "${BOX}" \
-    --ostype Debian \
-    --register \
-    --basefolder "${FOLDER_VBOX}"
+VBoxManage createvm --name "${BOX}" --ostype Debian --register --basefolder "${FOLDER_VBOX}"
     
-VBoxManage modifyvm "${BOX}" \
-    --memory 360 \
-    --boot1 dvd \
-    --boot2 disk \
-    --boot3 none \
-    --boot4 none \
-    --vram 12 \
-    --pae off \
-    --rtcuseutc on
+VBoxManage modifyvm "${BOX}" --memory 360 --boot1 dvd --boot2 disk \
+    --boot3 none --boot4 none --vram 12 --pae off --rtcuseutc on
     
-VBoxManage storagectl "${BOX}" \
-    --name "IDE Controller" \
-    --add ide \
-    --controller PIIX4 \
-    --hostiocache on
+VBoxManage storagectl "${BOX}" --name "IDE Controller" --add ide \
+    --controller PIIX4 --hostiocache on
 
-VBoxManage storagectl "${BOX}" \
-    --name "SATA Controller" \
-    --add sata \
-    --controller IntelAhci \
-    --sataportcount 1 \
-    --hostiocache off
+VBoxManage storagectl "${BOX}" --name "SATA Controller" --add sata \
+    --controller IntelAhci --sataportcount 1 --hostiocache off
     
-VBoxManage createhd \
-    --filename "${FOLDER_VBOX}/${BOX}/${BOX}.vdi" \
-    --size 40960
+VBoxManage createhd --filename "${FOLDER_VBOX}/${BOX}/${BOX}.vdi" --size 40960
     
-VBoxManage storageattach "${BOX}" \
-    --storagectl "SATA Controller" \
-    --port 0 \
-    --device 0 \
-    --type hdd \
-    --medium "${FOLDER_VBOX}/${BOX}/${BOX}.vdi"
+VBoxManage storageattach "${BOX}" --storagectl "SATA Controller" --port 0 \
+    --device 0 --type hdd --medium "${FOLDER_VBOX}/${BOX}/${BOX}.vdi"
 
-VBoxManage storageattach "${BOX}" \
-    --storagectl "IDE Controller" \
-    --port 0 \
-    --device 0 \
-    --type dvddrive \
-    --medium "${FOLDER_BUILD}/custom.iso"
+VBoxManage storageattach "${BOX}" --storagectl "IDE Controller" \
+    --port 0 --device 0 --type dvddrive --medium "${FOLDER_BUILD}/custom.iso"
     
-VBoxManage storageattach "${BOX}" \
-    --storagectl "IDE Controller" \
-    --port 1 \
-    --device 0 \
-    --type dvddrive \
-    --medium "${VBOX_GUESTADDITIONS}"
-
 info "Booting VM..."
 VBoxManage startvm "${BOX}"
+wait_for_shutdown
 
-info "Waiting for installer..."
-while VBoxManage list runningvms | grep "${BOX}" > /dev/null; do
-    sleep 10
-done
+info "Installing guest additions..."
+VBoxManage storageattach "${BOX}" --storagectl "IDE Controller" --port 0 \
+    --device 0 --type dvddrive --medium "${VBOX_GUESTADDITIONS}"
 
-info "Removing temporary DVD device..."
-VBoxManage storageattach "${BOX}" \
-    --storagectl "IDE Controller" \
-    --port 1 \
-    --device 0 \
-    --type dvddrive \
-    --medium none
+VBoxManage startvm "${BOX}"
+wait_for_shutdown
 
 info "Building Vagrant box..."
 vagrant package --base "${BOX}" --output "${BOX}.box"
