@@ -10,8 +10,6 @@ Dependencies: **VirtualBox, cdrtools, vagrant**
 
     brew tap homebrew/dupes
     brew install homebrew/dupes/libarchive
-    cp /usr/bin/bsdtar /usr/bin/bsdtar.orig
-    cp /usr/local/bin/bsdtar /usr/bin/bsdtar
 
 William's notes
 ---------------
