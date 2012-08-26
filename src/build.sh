@@ -90,7 +90,7 @@ info "Grant write permission..."
 chmod -R u+w "${FOLDER_BUILD}/custom"
 
 info "Customizing ISO files..."
-FOLDER_INSTALL=$(ls -1 -d ${FOLDER_BUILD}/custom/install.* | sed 's/^.*\///')
+FOLDER_INSTALL=$(ls -1 -d "${FOLDER_BUILD}/custom/install."* | sed 's/^.*\///')
 cp -r "${FOLDER_BUILD}/custom/${FOLDER_INSTALL}/"* "${FOLDER_BUILD}/custom/install/"
 
 pushd "${FOLDER_BUILD}/initrd"
