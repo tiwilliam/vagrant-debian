@@ -16,7 +16,7 @@ case ${argv[0]} in
     ;;
 esac
 
-VERSION="6.0.5"
+VERSION="6.0.6"
 BOX="debian-${VERSION}-${ARCH}"
 
 VBOX_APPLICATION="/Applications/VirtualBox.app"
@@ -84,7 +84,7 @@ else
 fi
 
 info "Unpacking ${DEBIAN_ISO_NAME}..."
-bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
+/usr/local/bin/bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
 
 info "Grant write permission..."
 chmod -R u+w "${FOLDER_BUILD}/custom"
