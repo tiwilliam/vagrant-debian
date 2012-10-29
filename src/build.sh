@@ -88,7 +88,7 @@ else
 fi
 
 info "Unpacking ${DEBIAN_ISO_NAME}..."
-/usr/local/bin/bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
+bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
 
 info "Grant write permission..."
 chmod -R u+w "${FOLDER_BUILD}/custom"
