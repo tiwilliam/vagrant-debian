@@ -81,7 +81,7 @@ ISO_MD5=$(curl -s "${DEBIAN_URL}/MD5SUMS" | grep "${DEBIAN_ISO_NAME}" | awk '{ p
 if [ ! "${ISO_MD5}" ]; then
     info "Faild to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
 else
-    ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
+    ISO_HASH=$(md5sum "${DEBIAN_ISO_FILE}" | awk '{ print $1 }')
     if [ "${ISO_MD5}" != "${ISO_HASH}" ]; then
         abort "MD5 does not match - expected ${ISO_MD5}. Aborting."
     fi
