@@ -53,6 +53,22 @@ function wait_for_shutdown {
     done
 }
 
+if cpio --version | grep -q "GNU cpio"; then
+	# GNU cpio allows to append files, which is easier and faster.
+	IS_GNU_CPIO=1
+
+	# Fakeroot can only be used in combination with GNU cpio. Otherwise, run "make" as root.
+	FAKEROOT=$(which fakeroot)
+
+	if [ -z "${FAKEROOT}" ] && [ $(id -u) != "0" ]; then
+		abort "Run as root or install fakeroot. Aborting."
+	fi
+else
+	# If GNU cpio is not available, initrd needs to be extracted, modified, and packed again.
+	# This includes device files, therefore root privileges are required for this step.
+	IS_GNU_CPIO=0
+fi
+
 # Check if VM name is occupied
 if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
     read -p "Are you sure you want to destroy the '${BOX}' VM? [y/n] "
@@ -98,9 +114,20 @@ FOLDER_INSTALL=$(ls -1 -d "${FOLDER_BUILD}/custom/install."* | sed 's/^.*\///')
 cp -r "${FOLDER_BUILD}/custom/${FOLDER_INSTALL}/"* "${FOLDER_BUILD}/custom/install/"
 
 pushd "${FOLDER_BUILD}/initrd"
-    gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
+    if [ $IS_GNU_CPIO = 1 ]; then
+        gunzip "${FOLDER_BUILD}/custom/install/initrd.gz"
+    else
+        gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
+    fi
+
     cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
-    find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+
+    if [ $IS_GNU_CPIO = 1 ]; then
+        find . | ${FAKEROOT} cpio --create --format='newc' --append --file="${FOLDER_BUILD}/custom/install/initrd"
+        gzip "${FOLDER_BUILD}/custom/install/initrd"
+    else
+        find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    fi
 popd
 
 cp "${FOLDER_BASE}/src/poststrap.sh" "${FOLDER_BUILD}/custom/"

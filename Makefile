@@ -8,6 +8,7 @@ deps:
 	@which mkisofs || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
 	@which vagrant || { echo "ERROR: vagrant not found. Aborting."; exit 1; }
 	@which VBoxManage || { echo "ERROR: VirtualBox not found. Aborting."; exit 1; }
+	@test `id -u` = "0" || which fakeroot || { echo "ERROR: Run as root or install fakeroot. Aborting."; exit 1; }
 
 fixowner:
 	@mkdir -p build
