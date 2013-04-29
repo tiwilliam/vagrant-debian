@@ -16,7 +16,7 @@ case ${argv[0]} in
     ;;
 esac
 
-VERSION="6.0.6"
+VERSION="6.0.7"
 BOX="debian-${VERSION}-${ARCH}"
 
 if [ $(uname -s) = "Linux" ]; then
