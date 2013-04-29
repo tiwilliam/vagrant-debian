@@ -16,18 +16,22 @@ case ${argv[0]} in
     ;;
 esac
 
-VERSION="6.0.6"
+VERSION="6.0.7"
 BOX="debian-${VERSION}-${ARCH}"
 
-VBOX_APPLICATION="/Applications/VirtualBox.app"
-VBOX_GUESTADDITIONS="${VBOX_APPLICATION}/Contents/MacOS/VBoxGuestAdditions.iso"
+if [ $(uname -s) = "Linux" ]; then
+	VBOX_GUESTADDITIONS="/usr/share/virtualbox/VBoxGuestAdditions.iso"
+else
+	VBOX_APPLICATION="/Applications/VirtualBox.app"
+	VBOX_GUESTADDITIONS="${VBOX_APPLICATION}/Contents/MacOS/VBoxGuestAdditions.iso"
+fi
 
 FOLDER_BASE=$(pwd)
 FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
-DEBIAN_MIRROR="ftp.acc.umu.se"
+DEBIAN_MIRROR="ftp.ch.debian.org"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
 DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
 DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
@@ -48,6 +52,22 @@ function wait_for_shutdown {
         sleep 10
     done
 }
+
+if cpio --version | grep -q "GNU cpio"; then
+	# GNU cpio allows to append files, which is easier and faster.
+	IS_GNU_CPIO=1
+
+	# Fakeroot can only be used in combination with GNU cpio. Otherwise, run "make" as root.
+	FAKEROOT=$(which fakeroot)
+
+	if [ -z "${FAKEROOT}" ] && [ $(id -u) != "0" ]; then
+		abort "Run as root or install fakeroot. Aborting."
+	fi
+else
+	# If GNU cpio is not available, initrd needs to be extracted, modified, and packed again.
+	# This includes device files, therefore root privileges are required for this step.
+	IS_GNU_CPIO=0
+fi
 
 # Check if VM name is occupied
 if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
@@ -77,14 +97,14 @@ ISO_MD5=$(curl -s "${DEBIAN_URL}/MD5SUMS" | grep "${DEBIAN_ISO_NAME}" | awk '{ p
 if [ ! "${ISO_MD5}" ]; then
     info "Faild to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
 else
-    ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
+    ISO_HASH=$(md5sum "${DEBIAN_ISO_FILE}" | awk '{ print $1 }')
     if [ "${ISO_MD5}" != "${ISO_HASH}" ]; then
         abort "MD5 does not match - expected ${ISO_MD5}. Aborting."
     fi
 fi
 
 info "Unpacking ${DEBIAN_ISO_NAME}..."
-/usr/local/bin/bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
+bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
 
 info "Grant write permission..."
 chmod -R u+w "${FOLDER_BUILD}/custom"
@@ -94,9 +114,20 @@ FOLDER_INSTALL=$(ls -1 -d "${FOLDER_BUILD}/custom/install."* | sed 's/^.*\///')
 cp -r "${FOLDER_BUILD}/custom/${FOLDER_INSTALL}/"* "${FOLDER_BUILD}/custom/install/"
 
 pushd "${FOLDER_BUILD}/initrd"
-    gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
+    if [ $IS_GNU_CPIO = 1 ]; then
+        gunzip "${FOLDER_BUILD}/custom/install/initrd.gz"
+    else
+        gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
+    fi
+
     cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
-    find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+
+    if [ $IS_GNU_CPIO = 1 ]; then
+        find . | ${FAKEROOT} cpio --create --format='newc' --append --file="${FOLDER_BUILD}/custom/install/initrd"
+        gzip "${FOLDER_BUILD}/custom/install/initrd"
+    else
+        find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    fi
 popd
 
 cp "${FOLDER_BASE}/src/poststrap.sh" "${FOLDER_BUILD}/custom/"

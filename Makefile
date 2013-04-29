@@ -4,10 +4,11 @@ all: 64
 64: deps softclean build-64
 
 deps:
-	@which -s bsdtar || { echo "ERROR: bsdtar not found. Aborting."; exit 1; }
-	@which -s mkisofs || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
-	@which -s vagrant || { echo "ERROR: vagrant not found. Aborting."; exit 1; }
-	@which -s VBoxManage || { echo "ERROR: VirtualBox not found. Aborting."; exit 1; }
+	@which bsdtar || { echo "ERROR: bsdtar not found. Aborting."; exit 1; }
+	@which mkisofs || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
+	@which vagrant || { echo "ERROR: vagrant not found. Aborting."; exit 1; }
+	@which VBoxManage || { echo "ERROR: VirtualBox not found. Aborting."; exit 1; }
+	@test `id -u` = "0" || which fakeroot || { echo "ERROR: Run as root or install fakeroot. Aborting."; exit 1; }
 
 fixowner:
 	@mkdir -p build

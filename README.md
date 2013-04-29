@@ -4,7 +4,9 @@ This is what it takes to create your own Vagrant box from the Debian netinstall 
 
     make [32 | 64]
 
-Dependencies: **VirtualBox, cdrtools, vagrant**
+Dependencies: **VirtualBox, cdrtools, vagrant, fakeroot**
+
+**Note!** Needs to run as root unless you are using GNU cpio and fakeroot. If running as root, fakeroot is not needed.
 
 **Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack ISO files. Possible solution:
 
