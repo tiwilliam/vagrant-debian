@@ -31,7 +31,7 @@ FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
-DEBIAN_MIRROR="ftp.acc.umu.se"
+DEBIAN_MIRROR="ftp.ch.debian.org"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
 DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
 DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
