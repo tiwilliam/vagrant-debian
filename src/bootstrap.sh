@@ -24,5 +24,8 @@ cp /etc/rc.{local,local.bak} && cp /root/poststrap.sh /etc/rc.local
 apt-get -y autoremove
 apt-get clean
 
+# Install ohai gem until CHEF-3778 is fixed
+gem install ohai
+
 # Wait for disk
 sync

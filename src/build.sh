@@ -16,7 +16,7 @@ case ${argv[0]} in
     ;;
 esac
 
-VERSION="6.0.6"
+VERSION="7.0.0"
 BOX="debian-${VERSION}-${ARCH}"
 
 VBOX_APPLICATION="/Applications/VirtualBox.app"
