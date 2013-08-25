@@ -8,8 +8,7 @@ Dependencies: **VirtualBox, cdrtools, vagrant**
 
 **Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack ISO files. Possible solution:
 
-    brew tap homebrew/dupes
-    brew install homebrew/dupes/libarchive
+    brew install libarchive
 
 William's notes
 ---------------
