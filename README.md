@@ -18,7 +18,7 @@ Forked off https://github.com/joneskoo/vagrant-debian-squeeze-32
 
 New stuff:
 
-- Bumped to 6.0.5
+- Bumped to wheezy
 - 64- and 32-bit support
 - Depend on bsdtar since GNU tar can't extract ISO
 - Check against servers MD5 sum
