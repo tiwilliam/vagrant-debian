@@ -47,7 +47,7 @@ function wait_for_shutdown {
 }
 
 # Make sure guest additions are available.
-VBOX_GUESTADDITIONS=`find / -name VBoxGuestAdditions.iso 2>/dev/null`
+VBOX_GUESTADDITIONS=$(find / -name VBoxGuestAdditions.iso 2>/dev/null)
 if [ "$VBOX_GUESTADDITIONS" == "" ]; then
     abort "VirtualBox Guest Additions not found. Aborting."
 fi
@@ -80,7 +80,13 @@ ISO_MD5=$(curl -s "${DEBIAN_URL}/MD5SUMS" | grep "${DEBIAN_ISO_NAME}" | awk '{ p
 if [ ! "${ISO_MD5}" ]; then
     info "Faild to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
 else
-    ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
+    $MD5=$(which md5)
+    if [ "$MD5" != "" ]; then
+        ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
+    else
+        ISO_HASH=$(md5sum "${DEBIAN_ISO_FILE}" | grep -o "^[a-z0-9]*")
+    fi
+    
     if [ "${ISO_MD5}" != "${ISO_HASH}" ]; then
         abort "MD5 does not match - expected ${ISO_MD5}. Aborting."
     fi
