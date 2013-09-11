@@ -19,9 +19,6 @@ esac
 VERSION="7.1.0"
 BOX="debian-${VERSION}-${ARCH}"
 
-VBOX_APPLICATION="/Applications/VirtualBox.app"
-VBOX_GUESTADDITIONS="${VBOX_APPLICATION}/Contents/MacOS/VBoxGuestAdditions.iso"
-
 FOLDER_BASE=$(pwd)
 FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
@@ -42,12 +39,22 @@ function info {
     echo "INFO: $1"
 }
 
+function warn {
+    echo "WARN: $1"
+}
+
 function wait_for_shutdown {
     info "Waiting for installer..."
     while VBoxManage list runningvms | grep "${BOX}" > /dev/null; do
         sleep 10
     done
 }
+
+# Make sure guest additions are available.
+VBOX_GUESTADDITIONS=$(find / -name VBoxGuestAdditions.iso 2>/dev/null)
+if [ "$VBOX_GUESTADDITIONS" == "" ]; then
+    abort "VirtualBox Guest Additions not found. Aborting."
+fi
 
 # Check if VM name is occupied
 if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
@@ -75,16 +82,27 @@ ISO_MD5=$(curl -s "${DEBIAN_URL}/MD5SUMS" | grep "${DEBIAN_ISO_NAME}" | awk '{ p
 
 # Check if hash is correct
 if [ ! "${ISO_MD5}" ]; then
-    info "Faild to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
+    info "Failed to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
 else
-    ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
+    MD5=$(which md5)
+    if [ -n "$MD5" ]; then
+        ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
+    else
+        ISO_HASH=$(md5sum "${DEBIAN_ISO_FILE}" | grep -o "^[a-z0-9]*")
+    fi
+
     if [ "${ISO_MD5}" != "${ISO_HASH}" ]; then
         abort "MD5 does not match - expected ${ISO_MD5}. Aborting."
     fi
 fi
 
 info "Unpacking ${DEBIAN_ISO_NAME}..."
-/usr/local/opt/libarchive/bin/bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
+BSDTAR="/usr/local/opt/libarchive/bin/bsdtar"
+if [ ! -a "$BSDTAR" ]; then
+    warn "Using system libarchive. May fail on OSX."
+    BSDTAR="bsdtar"
+fi
+$BSDTAR -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
 
 info "Grant write permission..."
 chmod -R u+w "${FOLDER_BUILD}/custom"
@@ -94,9 +112,16 @@ FOLDER_INSTALL=$(ls -1 -d "${FOLDER_BUILD}/custom/install."* | sed 's/^.*\///')
 cp -r "${FOLDER_BUILD}/custom/${FOLDER_INSTALL}/"* "${FOLDER_BUILD}/custom/install/"
 
 pushd "${FOLDER_BUILD}/initrd"
-    gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
-    cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
-    find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    FAKEROOT=$(which fakeroot)
+    if [ -z "$FAKEROOT" ]; then
+        gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
+        cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
+        find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    else
+        gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | ${FAKEROOT} cpio -id
+        cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
+        find . | ${FAKEROOT} cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    fi
 popd
 
 cp "${FOLDER_BASE}/src/poststrap.sh" "${FOLDER_BUILD}/custom/"
@@ -115,24 +140,24 @@ mkisofs -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
 
 info "Creating VM..."
 VBoxManage createvm --name "${BOX}" --ostype Debian --register --basefolder "${FOLDER_VBOX}"
-    
+
 VBoxManage modifyvm "${BOX}" --memory 360 --boot1 dvd --boot2 disk \
     --boot3 none --boot4 none --vram 12 --pae off --rtcuseutc on
-    
+
 VBoxManage storagectl "${BOX}" --name "IDE Controller" --add ide \
     --controller PIIX4 --hostiocache on
 
 VBoxManage storagectl "${BOX}" --name "SATA Controller" --add sata \
     --controller IntelAhci --sataportcount 1 --hostiocache off
-    
+
 VBoxManage createhd --filename "${FOLDER_VBOX}/${BOX}/${BOX}.vdi" --size 40960
-    
+
 VBoxManage storageattach "${BOX}" --storagectl "SATA Controller" --port 0 \
     --device 0 --type hdd --medium "${FOLDER_VBOX}/${BOX}/${BOX}.vdi"
 
 VBoxManage storageattach "${BOX}" --storagectl "IDE Controller" \
     --port 0 --device 0 --type dvddrive --medium "${FOLDER_BUILD}/custom.iso"
-    
+
 info "Booting VM..."
 VBoxManage startvm "${BOX}"
 wait_for_shutdown
