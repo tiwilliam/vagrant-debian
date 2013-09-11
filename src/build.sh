@@ -112,9 +112,16 @@ FOLDER_INSTALL=$(ls -1 -d "${FOLDER_BUILD}/custom/install."* | sed 's/^.*\///')
 cp -r "${FOLDER_BUILD}/custom/${FOLDER_INSTALL}/"* "${FOLDER_BUILD}/custom/install/"
 
 pushd "${FOLDER_BUILD}/initrd"
-    gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
-    cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
-    find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    FAKEROOT=$(which fakeroot)
+    if [ -z "$FAKEROOT" ]; then
+        gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | cpio -id
+        cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
+        find . | cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    else
+        gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | ${FAKEROOT} cpio -id
+        cp "${FOLDER_BASE}/src/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
+        find . | ${FAKEROOT} cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    fi
 popd
 
 cp "${FOLDER_BASE}/src/poststrap.sh" "${FOLDER_BUILD}/custom/"

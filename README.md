@@ -1,12 +1,14 @@
 Usage
 -----
-This is what it takes to create your own Vagrant box from the Debian netinstall ISO image:
+This is what it takes to create your own Vagrant box from the Debian netinstall
+ISO image:
 
     make [32 | 64]
 
-Dependencies: **VirtualBox, cdrtools, vagrant**
+Dependencies: **VirtualBox, cdrtools, vagrant, fakeroot (Linux only)**
 
-**Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack ISO files. We use brew's version:
+**Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack ISO
+files. We use brew's version:
 
     brew install libarchive
 
@@ -38,8 +40,8 @@ Made it:
 Ben's notes
 -----------
 
-Forked Carl's repo, and it sort of worked out of the box. Tweaked 
-office 12.04 release: 
+Forked Carl's repo, and it sort of worked out of the box. Tweaked
+office 12.04 release:
 
  - Downloading 12.04 final release. (Today as of this writing)
  - Checking MD5 to make sure it is the right version
