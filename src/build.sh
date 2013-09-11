@@ -90,7 +90,7 @@ else
     else
         ISO_HASH=$(md5sum "${DEBIAN_ISO_FILE}" | grep -o "^[a-z0-9]*")
     fi
-    
+
     if [ "${ISO_MD5}" != "${ISO_HASH}" ]; then
         abort "MD5 does not match - expected ${ISO_MD5}. Aborting."
     fi
@@ -133,24 +133,24 @@ mkisofs -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
 
 info "Creating VM..."
 VBoxManage createvm --name "${BOX}" --ostype Debian --register --basefolder "${FOLDER_VBOX}"
-    
+
 VBoxManage modifyvm "${BOX}" --memory 360 --boot1 dvd --boot2 disk \
     --boot3 none --boot4 none --vram 12 --pae off --rtcuseutc on
-    
+
 VBoxManage storagectl "${BOX}" --name "IDE Controller" --add ide \
     --controller PIIX4 --hostiocache on
 
 VBoxManage storagectl "${BOX}" --name "SATA Controller" --add sata \
     --controller IntelAhci --sataportcount 1 --hostiocache off
-    
+
 VBoxManage createhd --filename "${FOLDER_VBOX}/${BOX}/${BOX}.vdi" --size 40960
-    
+
 VBoxManage storageattach "${BOX}" --storagectl "SATA Controller" --port 0 \
     --device 0 --type hdd --medium "${FOLDER_VBOX}/${BOX}/${BOX}.vdi"
 
 VBoxManage storageattach "${BOX}" --storagectl "IDE Controller" \
     --port 0 --device 0 --type dvddrive --medium "${FOLDER_BUILD}/custom.iso"
-    
+
 info "Booting VM..."
 VBoxManage startvm "${BOX}"
 wait_for_shutdown
