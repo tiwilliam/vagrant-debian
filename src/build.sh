@@ -19,9 +19,6 @@ esac
 VERSION="7.1.0"
 BOX="debian-${VERSION}-${ARCH}"
 
-VBOX_APPLICATION="/Applications/VirtualBox.app"
-VBOX_GUESTADDITIONS="${VBOX_APPLICATION}/Contents/MacOS/VBoxGuestAdditions.iso"
-
 FOLDER_BASE=$(pwd)
 FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
@@ -48,6 +45,12 @@ function wait_for_shutdown {
         sleep 10
     done
 }
+
+# Make sure guest additions are available.
+VBOX_GUESTADDITIONS=`find / -name VBoxGuestAdditions.iso 2>/dev/null`
+if [ "$VBOX_GUESTADDITIONS" == "" ]; then
+    abort "VirtualBox Guest Additions not found. Aborting."
+fi
 
 # Check if VM name is occupied
 if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
