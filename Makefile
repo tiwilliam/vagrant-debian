@@ -3,16 +3,11 @@ all: 64
 32: deps softclean build-32
 64: deps softclean build-64
 
-UNAME := $(shell uname)
-
 deps:
-  @which bsdtar || { echo "ERROR: bsdtar not found. Aborting."; exit 1; }
+	@which bsdtar || { echo "ERROR: bsdtar not found. Aborting."; exit 1; }
 	@which mkisofs || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
 	@which vagrant || { echo "ERROR: vagrant not found. Aborting."; exit 1; }
 	@which VBoxManage || { echo "ERROR: VirtualBox not found. Aborting."; exit 1; }
-  ifneq ($(UNAME), Darwin)
-    @which fakeroot || { echo "ERROR: fakeroot not found. Aborting."; exit 1; }
-  endif
 
 fixowner:
 	@mkdir -p build
