@@ -39,6 +39,10 @@ function info {
     echo "INFO: $1"
 }
 
+function warn {
+    echo "WARN: $1"
+}
+
 function wait_for_shutdown {
     info "Waiting for installer..."
     while VBoxManage list runningvms | grep "${BOX}" > /dev/null; do
@@ -78,10 +82,10 @@ ISO_MD5=$(curl -s "${DEBIAN_URL}/MD5SUMS" | grep "${DEBIAN_ISO_NAME}" | awk '{ p
 
 # Check if hash is correct
 if [ ! "${ISO_MD5}" ]; then
-    info "Faild to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
+    info "Failed to download MD5 hash for ${DEBIAN_ISO_NAME}. Skipping."
 else
-    $MD5=$(which md5)
-    if [ "$MD5" != "" ]; then
+    MD5=$(which md5)
+    if [ -n "$MD5" ]; then
         ISO_HASH=$(md5 -q "${DEBIAN_ISO_FILE}")
     else
         ISO_HASH=$(md5sum "${DEBIAN_ISO_FILE}" | grep -o "^[a-z0-9]*")
@@ -93,7 +97,12 @@ else
 fi
 
 info "Unpacking ${DEBIAN_ISO_NAME}..."
-/usr/local/opt/libarchive/bin/bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
+BSDTAR="/usr/local/opt/libarchive/bin/bsdtar"
+if [ ! -a "$BSDTAR" ]; then
+    warn "Using system libarchive. May fail on OSX."
+    BSDTAR="bsdtar"
+fi
+$BSDTAR -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
 
 info "Grant write permission..."
 chmod -R u+w "${FOLDER_BUILD}/custom"
