@@ -16,7 +16,7 @@ case ${argv[0]} in
     ;;
 esac
 
-VERSION="7.1.0"
+VERSION="7.4.0"
 BOX="debian-${VERSION}-${ARCH}"
 
 FOLDER_BASE=$(pwd)
@@ -24,7 +24,7 @@ FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
-DEBIAN_MIRROR="ftp.fr.debian.org"
+DEBIAN_MIRROR="cdimage.debian.org"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
 DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
 DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
