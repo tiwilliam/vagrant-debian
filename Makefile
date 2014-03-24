@@ -5,7 +5,7 @@ all: 64
 
 deps:
 	@which bsdtar || { echo "ERROR: bsdtar not found. Aborting."; exit 1; }
-	@which mkisofs || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
+	@which mkisofs || which genisoimage || { echo "ERROR: mkisofs not found. Aborting."; exit 1; }
 	@which vagrant || { echo "ERROR: vagrant not found. Aborting."; exit 1; }
 	@which VBoxManage || { echo "ERROR: VirtualBox not found. Aborting."; exit 1; }
 

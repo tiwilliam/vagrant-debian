@@ -24,7 +24,7 @@ FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
-DEBIAN_MIRROR="ftp.acc.umu.se"
+DEBIAN_MIRROR="ftp.fr.debian.org"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
 DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
 DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
@@ -97,7 +97,7 @@ else
 fi
 
 info "Unpacking ${DEBIAN_ISO_NAME}..."
-BSDTAR="/usr/local/opt/libarchive/bin/bsdtar"
+BSDTAR="$(which bsdtar)"
 if [ ! -a "$BSDTAR" ]; then
     warn "Using system libarchive. May fail on OSX."
     BSDTAR="bsdtar"
@@ -133,7 +133,8 @@ chmod 755 "${FOLDER_BUILD}/custom/poststrap.sh"
 chmod 755 "${FOLDER_BUILD}/custom/bootstrap.sh"
 
 info "Packing ISO files..."
-mkisofs -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
+MKISOFS=$(which mkisofs || which genisoimage)
+$MKISOFS -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
     -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
     -boot-load-size 4 -boot-info-table -o "${FOLDER_BUILD}/custom.iso" \
     "${FOLDER_BUILD}/custom"

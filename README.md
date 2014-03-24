@@ -5,12 +5,22 @@ ISO image:
 
     make [32 | 64]
 
-Dependencies: **VirtualBox, cdrtools, vagrant, fakeroot (Linux only)**
+Dependencies: **VirtualBox, cdrtools, bsdtar, vagrant, fakeroot (Linux only)**
 
 **Note!** Mac OS X Lion seems to have a broken libarchive, unable to unpack ISO
 files. We use brew's version:
 
     brew install libarchive
+
+Webofmars notes:
+---------------
+
+Forked off https://github.com/tq-cgu/vagrant-debian.git
+
+New stuff:
+
+- allow the use of genisoimage for debian
+- corrected the path of bsdtar
 
 William's notes
 ---------------
