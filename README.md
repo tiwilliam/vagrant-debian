@@ -16,4 +16,4 @@ Install [Vagrant](http://www.vagrantup.com/downloads.html) and
     apt-get install fakeroot bsdtar genisoimage vagrant virtualbox virtualbox-guest-additions-iso
     ./vagrant-debian 64
 
-*Forked off https://github.com/joneskoo/vagrant-debian-squeeze-32*
+Forked off [joneskoo/vagrant-debian-squeeze-32](https://github.com/joneskoo/vagrant-debian-squeeze-32)
