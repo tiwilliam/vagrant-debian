@@ -1,0 +1,217 @@
+#!/bin/bash
+
+VERSION="7.5.0"
+BOX="debian-${VERSION}-${ARCH}"
+
+FOLDER_BASE=$(pwd)
+FOLDER_ISO="${FOLDER_BASE}/iso"
+FOLDER_BUILD="${FOLDER_BASE}/build"
+FOLDER_VBOX="${FOLDER_BUILD}/vbox"
+
+DEBIAN_MIRROR="cdimage.debian.org"
+DEBIAN_URL="http://${DEBIAN_MIRROR}/debian-cd/${VERSION}/${ARCH}/iso-cd"
+DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
+DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
+DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
+
+VBGA_DEBIAN_PATH="/usr/share/virtualbox/VBoxGuestAdditions.iso"
+VBGA_DARWIN_PATH="/Applications/VirtualBox.app/Contents/MacOS/VBoxGuestAdditions.iso"
+
+###############################################################################
+
+function abort {
+    echo >&2 "ERROR: $1"
+    exit 1
+}
+
+function info {
+    echo "INFO: $1"
+}
+
+function warn {
+    echo "WARN: $1"
+}
+
+###############################################################################
+
+function dep_vagrant {
+    if [[ -z $(which vagrant) ]]; then
+        abort "Could not find Vagrant. Aborting."
+    fi
+}
+
+function dep_virtualbox {
+    if [[ -z $(which VBoxManage) ]]; then
+        abort "Could not find VirtualBox and VBoxManage. Aborting."
+    fi
+
+    if [[ ! -f $VBGA_DEBIAN_PATH && ! -f $VBGA_DARWIN_PATH ]]; then
+        abort "Could not find VirtualBox Guest Additions. Aborting."
+    fi
+}
+
+function dep_bsdtar {
+    if [[ $(strings $(which bsdtar) | grep -c iso9960) -eq 0 ]]; then
+        abort "Your bsdtar lack support for ISO extraction. Aborting."
+    fi
+}
+
+function dep_mkisofs {
+    if [[ -z $(which mkisofs || which genisoimage) ]]; then
+        abort "Could not find mkisofs. Aborting."
+    fi
+}
+
+###############################################################################
+
+function clean {
+    info "Cleaning build directories..."
+    rm -rf "${FOLDER_BUILD}/custom"
+    rm -rf "${FOLDER_BUILD}/initrd"
+
+    info "Creating directories..."
+    mkdir -p "${FOLDER_ISO}"
+    mkdir -p "${FOLDER_VBOX}"
+    mkdir -p "${FOLDER_BUILD}/custom"
+    mkdir -p "${FOLDER_BUILD}/initrd"
+}
+
+function wait_for_shutdown {
+    info "Waiting for installer..."
+    while VBoxManage list runningvms | grep "${BOX}" > /dev/null; do
+        sleep 10
+    done
+}
+
+function download_iso {
+    if [ ! -f "${DEBIAN_ISO_FILE}" ]; then
+        info "Downloading ${DEBIAN_ISO_NAME}..."
+        curl --progress-bar -o "${DEBIAN_ISO_FILE}" -L "${DEBIAN_ISO_URL}"
+    fi
+}
+
+function customize_iso {
+    info "Unpacking ${DEBIAN_ISO_NAME}..."
+    bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
+
+    info "Grant write permission..."
+    chmod -R u+w "${FOLDER_BUILD}/custom"
+
+    info "Customizing ISO files..."
+    FOLDER_INSTALL=$(ls -1 -d "${FOLDER_BUILD}/custom/install."* | sed 's/^.*\///')
+    cp -r "${FOLDER_BUILD}/custom/${FOLDER_INSTALL}/"* "${FOLDER_BUILD}/custom/install/"
+
+    pushd "${FOLDER_BUILD}/initrd"
+        gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | $(which fakeroot) cpio -id
+        cp "${FOLDER_BASE}/config/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
+        find . | $(which fakeroot) cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
+    popd
+
+    cp "${FOLDER_BASE}/scripts/poststrap.sh" "${FOLDER_BUILD}/custom/"
+    cp "${FOLDER_BASE}/scripts/bootstrap.sh" "${FOLDER_BUILD}/custom/"
+    cp "${FOLDER_BASE}/config/isolinux.cfg" "${FOLDER_BUILD}/custom/isolinux/"
+
+    info "Setting permissions on bootstrap scripts..."
+    chmod 755 "${FOLDER_BUILD}/custom/poststrap.sh"
+    chmod 755 "${FOLDER_BUILD}/custom/bootstrap.sh"
+
+    info "Packing ISO files..."
+    MKISOFS=$(which mkisofs || which genisoimage)
+    $MKISOFS -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
+        -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
+        -boot-load-size 4 -boot-info-table -o "${FOLDER_BUILD}/custom.iso" \
+        "${FOLDER_BUILD}/custom"
+}
+
+function vbox_unregister {
+    if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
+        read -p "Are you sure you want to destroy the '${BOX}' VM? [y/n] "
+        if [ "$REPLY" == "y" ]; then
+            VBoxManage unregistervm "${BOX}" --delete > /dev/null
+        else
+            abort "VM ${BOX} already exist. Aborting."
+        fi
+    fi
+}
+
+function vbox_create_vm {
+    info "Creating VM..."
+    VBoxManage createvm --name "${BOX}" --ostype $OS_TYPE --register --basefolder "${FOLDER_VBOX}"
+    VBoxManage modifyvm "${BOX}" --memory 360 --boot1 dvd --boot2 disk --boot3 none --boot4 none --vram 12 --pae off --rtcuseutc on
+}
+
+function vbox_create_storage {
+    info "Creating storage devices..."
+    VBoxManage storagectl "${BOX}" --name "IDE Controller" --add ide --controller PIIX4 --hostiocache on
+    VBoxManage storagectl "${BOX}" --name "SATA Controller" --add sata --controller IntelAhci --portcount 1 --hostiocache off
+    VBoxManage createhd --filename "${FOLDER_VBOX}/${BOX}/${BOX}.vdi" --size 40960
+    VBoxManage storageattach "${BOX}" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --medium "${FOLDER_VBOX}/${BOX}/${BOX}.vdi"
+    VBoxManage storageattach "${BOX}" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "${FOLDER_BUILD}/custom.iso"
+}
+
+function vbox_start_and_wait_for_shutdown {
+    info "Booting VM..."
+    VBoxManage startvm "${BOX}"
+    wait_for_shutdown
+}
+
+function vbox_mount_guestadditions {
+    info "Installing guest additions..."
+    if [ -f $VBGA_DEBIAN_PATH ]; then
+        VBOX_GUESTADDITIONS=$VBGA_DEBIAN_PATH
+    else
+        VBOX_GUESTADDITIONS=$VBGA_DARWIN_PATH
+    fi
+    VBoxManage storageattach "${BOX}" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "${VBOX_GUESTADDITIONS}"
+}
+
+function vagrant_package {
+    info "Building Vagrant box..."
+    vagrant package --base "${BOX}" --output "${BOX}.box"
+}
+
+###############################################################################
+
+argv=($@)
+
+case ${argv[0]} in
+    32)
+        ARCH="i386"
+        OS_TYPE="Debian"
+    ;;
+    64)
+        ARCH="amd64"
+        OS_TYPE="Debian_64"
+    ;;
+    clean)
+        clean
+        exit
+    ;;
+    *)
+        echo "usage: $0 <32|64|clean>"
+        exit
+    ;;
+esac
+
+###############################################################################
+
+clean
+
+dep_vagrant
+dep_virtualbox
+dep_bsdtar
+dep_mkisofs
+
+vbox_unregister
+
+download_iso
+customize_iso
+
+vbox_create_vm
+vbox_create_storage
+vbox_start_and_wait_for_shutdown
+
+vbox_mount_guestadditions
+vbox_start_and_wait_for_shutdown
+
+vagrant_package
