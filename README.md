@@ -1,6 +1,8 @@
 # Debian for Vagrant
 
-This script bundle helps you download, preseed and package Debian for Vagrant.
+Tool for downloading and preseeding the latest version of Debian.
+It will download the network installer, install Debian using a preseed
+config, install guest additions and export it to the Vagrant box format.
 
 ## Mac OS X Guide
 
