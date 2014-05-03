@@ -130,7 +130,7 @@ function customize_iso {
 
 function vbox_unregister {
     if VBoxManage showvminfo "${BOX}" >/dev/null 2>/dev/null; then
-        read -p "Are you sure you want to destroy the '${BOX}' VM? [y/n] "
+        read -p "${txtred}Are you sure you want to destroy ${BOX}? ${txtrst}"
         if [ "$REPLY" == "y" ]; then
             VBoxManage unregistervm "${BOX}" --delete > /dev/null
         else
