@@ -54,9 +54,9 @@ function dep_virtualbox {
     fi
 }
 
-function dep_bsdtar {
-    if [[ $(strings $(which bsdtar) | grep -c iso9960) -eq 0 ]]; then
-        abort "Your bsdtar lack support for ISO extraction. Aborting."
+function dep_7z {
+    if [[ -z $(which 7z) ]]; then
+        abort "Could not find 7z. Aborting."
     fi
 }
 
@@ -97,7 +97,7 @@ function download_iso {
 
 function customize_iso {
     info "Unpacking ${DEBIAN_ISO_NAME}..."
-    bsdtar -xf "${DEBIAN_ISO_FILE}" -C "${FOLDER_BUILD}/custom"
+    7z x "${DEBIAN_ISO_FILE}" -o "${FOLDER_BUILD}/custom"
 
     info "Grant write permission..."
     chmod -R u+w "${FOLDER_BUILD}/custom"
@@ -184,7 +184,7 @@ clean
 
 dep_vagrant
 dep_virtualbox
-dep_bsdtar
+dep_7z
 dep_mkisofs
 
 vbox_unregister
