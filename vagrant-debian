@@ -70,6 +70,7 @@ function dep_mkisofs {
 
 function clean {
     info "Cleaning build directories..."
+    rm -rf "${FOLDER_BASE}"/*.box
     rm -rf "${FOLDER_BUILD}/custom"
     rm -rf "${FOLDER_BUILD}/initrd"
 
