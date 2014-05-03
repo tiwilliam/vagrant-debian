@@ -97,7 +97,7 @@ function download_iso {
 
 function customize_iso {
     info "Unpacking ${DEBIAN_ISO_NAME}..."
-    7z x "${DEBIAN_ISO_FILE}" -o "${FOLDER_BUILD}/custom"
+    7z x "${DEBIAN_ISO_FILE}" -o"${FOLDER_BUILD}/custom"
 
     info "Grant write permission..."
     chmod -R u+w "${FOLDER_BUILD}/custom"
