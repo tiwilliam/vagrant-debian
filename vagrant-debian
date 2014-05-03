@@ -133,6 +133,9 @@ function vbox_unregister {
         read -p "${txtred}Are you sure you want to destroy ${BOX}? ${txtrst}"
         if [ "$REPLY" == "y" ]; then
             VBoxManage unregistervm "${BOX}" --delete > /dev/null
+            if [ $? -ne 0 ]; then
+                abort "Failed to destroy ${BOX}. Aborting."
+            fi
         else
             abort "VM ${BOX} already exist. Aborting."
         fi
