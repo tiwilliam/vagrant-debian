@@ -1,5 +1,22 @@
 #!/bin/bash
 
+argv=($@)
+
+case ${argv[0]} in
+    32)
+        ARCH="i386"
+        OS_TYPE="Debian"
+    ;;
+    64)
+        ARCH="amd64"
+        OS_TYPE="Debian_64"
+    ;;
+    *)
+        echo "usage: $0 <32|64>"
+        exit
+    ;;
+esac
+
 VERSION="7.5.0"
 BOX="debian-${VERSION}-${ARCH}"
 
@@ -169,29 +186,6 @@ function vagrant_package {
     info "Building Vagrant box..."
     vagrant package --base "${BOX}" --output "${BOX}.box"
 }
-
-###############################################################################
-
-argv=($@)
-
-case ${argv[0]} in
-    32)
-        ARCH="i386"
-        OS_TYPE="Debian"
-    ;;
-    64)
-        ARCH="amd64"
-        OS_TYPE="Debian_64"
-    ;;
-    clean)
-        clean
-        exit
-    ;;
-    *)
-        echo "usage: $0 <32|64|clean>"
-        exit
-    ;;
-esac
 
 ###############################################################################
 
