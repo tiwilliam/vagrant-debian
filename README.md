@@ -1,6 +1,6 @@
 # Debian for Vagrant
 
-Tool for downloading and preseeding the latest version of Debian.
+Tool for downloading and preseeding the latest versions of Debian.
 It will download the network installer, install Debian using a preseed
 config, install guest additions and export it to the Vagrant box format.
 
