@@ -10,11 +10,19 @@ Install [Vagrant](http://www.vagrantup.com/downloads.html) and
 [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 
     brew install cdrtools p7zip
-    ./vagrant-debian 64 wheezy
+    ./vagrant-debian 64
+
 
 ## Debian Guide
 
     apt-get install fakeroot p7zip-full genisoimage vagrant virtualbox virtualbox-guest-additions-iso
     ./vagrant-debian 64 wheezy
+
+
+## Old releases
+
+You can also build images for squeeze using following command:
+
+    ./vagrant-debian 64 squeeze
 
 Forked off [joneskoo/vagrant-debian-squeeze-32](https://github.com/joneskoo/vagrant-debian-squeeze-32)
