@@ -16,7 +16,7 @@ Install [Vagrant](http://www.vagrantup.com/downloads.html) and
 ## Debian Guide
 
     apt-get install fakeroot p7zip-full genisoimage vagrant virtualbox virtualbox-guest-additions-iso
-    ./vagrant-debian 64 wheezy
+    ./vagrant-debian 64
 
 
 ## Old releases
