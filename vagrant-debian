@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 . scripts/utils.sh
 
@@ -25,7 +26,7 @@ case ${argv[1]} in
         MIRROR_DIR="archive"
     ;;
     *)
-        VERSION="7.5.0"
+        VERSION="7.6.0"
         MIRROR_DIR="release"
     ;;
 esac
@@ -101,7 +102,7 @@ function wait_for_shutdown {
 
 function download_iso {
     if [ ! -f "${DEBIAN_ISO_FILE}" ]; then
-        info "Downloading ${DEBIAN_ISO_NAME}..."
+        info "Downloading ${DEBIAN_ISO_NAME} from ${DEBIAN_ISO_URL} ..."
         curl --progress-bar -o "${DEBIAN_ISO_FILE}" -L "${DEBIAN_ISO_URL}"
     fi
 }
