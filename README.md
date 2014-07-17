@@ -9,7 +9,7 @@ config, install guest additions and export it to the Vagrant box format.
 Install [Vagrant](http://www.vagrantup.com/downloads.html) and
 [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 
-    brew install cdrtools p7zip
+    brew install fakeroot dvdrtools p7zip
     ./vagrant-debian 64
 
 
