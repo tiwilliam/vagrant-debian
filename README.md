@@ -19,10 +19,13 @@ Install [Vagrant](http://www.vagrantup.com/downloads.html) and
     ./vagrant-debian 64
 
 
-## Old releases
+## Old and testing releases
 
-You can also build images for squeeze using following command:
+You can also build images for squeeze and testing using any of following commands:
 
     ./vagrant-debian 64 squeeze
+
+
+    ./vagrant-debian 64 testing
 
 Forked off [joneskoo/vagrant-debian-squeeze-32](https://github.com/joneskoo/vagrant-debian-squeeze-32)
