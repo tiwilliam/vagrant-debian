@@ -15,7 +15,7 @@ case ${argv[0]} in
         OS_TYPE="Debian_64"
     ;;
     *)
-        echo "usage: $0 <32|64> <squeeze|wheezy>"
+        echo "usage: $0 <32|64> <squeeze|wheezy|testing>"
         exit
     ;;
 esac
@@ -23,11 +23,15 @@ esac
 case ${argv[1]} in
     "squeeze")
         VERSION="6.0.9"
-        MIRROR_DIR="archive"
+        MIRROR_DIR="archive/${VERSION}"
+    ;;
+    "testing")
+        VERSION="testing"
+        MIRROR_DIR="weekly-builds"
     ;;
     *)
         VERSION="7.6.0"
-        MIRROR_DIR="release"
+        MIRROR_DIR="release/${VERSION}"
     ;;
 esac
 
@@ -40,7 +44,7 @@ FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
 DEBIAN_MIRROR="cdimage.debian.org"
-DEBIAN_URL="http://${DEBIAN_MIRROR}/mirror/cdimage/${MIRROR_DIR}/${VERSION}/${ARCH}/iso-cd"
+DEBIAN_URL="http://${DEBIAN_MIRROR}/mirror/cdimage/${MIRROR_DIR}/${ARCH}/iso-cd"
 DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
 DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
 DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
