@@ -25,6 +25,7 @@ You can also build images for squeeze and testing using any of following command
 
     ./vagrant-debian 64 squeeze
 
+or
 
     ./vagrant-debian 64 testing
 
