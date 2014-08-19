@@ -22,7 +22,7 @@ esac
 
 case ${argv[1]} in
     "squeeze")
-        VERSION="6.0.9"
+        VERSION="6.0.10"
         MIRROR_DIR="archive/${VERSION}"
     ;;
     "testing")
