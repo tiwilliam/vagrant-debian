@@ -30,7 +30,7 @@ case ${argv[1]} in
         MIRROR_DIR="weekly-builds"
     ;;
     *)
-        VERSION="7.6.0"
+        VERSION="7.7.0"
         MIRROR_DIR="release/${VERSION}"
     ;;
 esac
