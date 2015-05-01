@@ -1,7 +1,13 @@
 #!/bin/bash
 set -e
-
 . scripts/utils.sh
+
+function usage {
+  echo "usage: $0 <32|64> [stable|testing| {version} ]"
+  echo "       where {version} format [0-9].[0-9].[0-9] like 7.8.0 "
+  echo "       if {version} not set - last stable default "
+  exit
+}
 
 argv=($@)
 
@@ -15,26 +21,31 @@ case ${argv[0]} in
         OS_TYPE="Debian_64"
     ;;
     *)
-        echo "usage: $0 <32|64> <squeeze|wheezy|testing>"
-        exit
+        usage ;
     ;;
 esac
 
 case ${argv[1]} in
-    "squeeze")
-        VERSION="6.0.10"
-        MIRROR_DIR="archive/${VERSION}"
+    "stable")
+        VERSION="current"
+        MIRROR_DIR="release"
     ;;
     "testing")
         VERSION="testing"
         MIRROR_DIR="weekly-builds"
     ;;
     *)
-        VERSION="7.8.0"
-        MIRROR_DIR="release/${VERSION}"
+        if [ -z "${argv[1]}" ] ; then
+            VERSION="current"
+            MIRROR_DIR="release"
+        elif [[ ${argv[1]} =~ ^[0-9]\.[0-9]\.[0-9]+$ ]] ; then
+            VERSION="${argv[1]}"
+            MIRROR_DIR="archive/${VERSION}"
+        else
+            usage ;
+        fi
     ;;
 esac
-
 
 BOX="debian-${VERSION}-${ARCH}"
 
