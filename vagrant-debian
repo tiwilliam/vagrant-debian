@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
+
 . scripts/utils.sh
 
 function usage {
-  echo "usage: $0 <32|64> [stable|testing| {version} ]"
-  echo "       where {version} format [0-9].[0-9].[0-9] like 7.8.0 "
-  echo "       if {version} not set - last stable default "
+  echo "usage: $0 <32|64> [stable|testing|{x.y.z}]"
+  echo "       where {x.y.z} is a valid Debian version (e.g. 7.8.0)"
   exit
 }
 
@@ -38,7 +38,7 @@ case ${argv[1]} in
         if [ -z "${argv[1]}" ] ; then
             VERSION="current"
             MIRROR_DIR="release"
-        elif [[ ${argv[1]} =~ ^[0-9]\.[0-9]\.[0-9]+$ ]] ; then
+        elif [[ ${argv[1]} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
             VERSION="${argv[1]}"
             MIRROR_DIR="archive/${VERSION}"
         else
@@ -46,6 +46,7 @@ case ${argv[1]} in
         fi
     ;;
 esac
+
 
 BOX="debian-${VERSION}-${ARCH}"
 
