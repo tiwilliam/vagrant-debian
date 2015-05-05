@@ -119,8 +119,11 @@ function wait_for_shutdown {
 function download_iso {
     if [ ! -f "${DEBIAN_ISO_FILE}" ]; then
         info "Downloading ${DEBIAN_ISO_NAME} from ${DEBIAN_ISO_URL} ..."
-        curl --progress-bar --output "${DEBIAN_ISO_FILE}" \
-             --location "${DEBIAN_ISO_URL}"
+        if ! curl --progress-bar --output "${DEBIAN_ISO_FILE}" \
+                --location "${DEBIAN_ISO_URL}" --fail
+        then
+            abort "Download failed. Maybe the requested version doesn't exist?"
+        fi
     fi
 }
 
