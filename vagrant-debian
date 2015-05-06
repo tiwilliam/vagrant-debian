@@ -25,30 +25,30 @@ case ${argv[0]} in
     ;;
 esac
 
-case ${argv[1]} in
-    "stable")
+RELEASE_SPECIFIER="$2"
+case "$RELEASE_SPECIFIER" in
+    "" | "stable")
         VERSION="current"
-        MIRROR_DIR="release"
+        # TODO: current version number should be fetched from the net
+        VERSION_NUMBER="8.0.0"
+        MIRROR_DIR="release/${VERSION_NUMBER}"
     ;;
     "testing")
         VERSION="testing"
         MIRROR_DIR="weekly-builds"
     ;;
+    *.*.*)
+        VERSION="${RELEASE_SPECIFIER}"
+        MIRROR_DIR="archive/${VERSION}"
+    ;;
     *)
-        if [ -z "${argv[1]}" ] ; then
-            VERSION="current"
-            MIRROR_DIR="release"
-        elif [[ ${argv[1]} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
-            VERSION="${argv[1]}"
-            MIRROR_DIR="archive/${VERSION}"
-        else
-            usage ;
-        fi
+        usage
     ;;
 esac
 
-
 BOX="debian-${VERSION}-${ARCH}"
+
+VERSION_NUMBER="${VERSION_NUMBER:-$VERSION}"
 
 FOLDER_BASE=$(pwd)
 FOLDER_ISO="${FOLDER_BASE}/iso"
@@ -57,7 +57,7 @@ FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
 DEBIAN_MIRROR="cdimage.debian.org"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/mirror/cdimage/${MIRROR_DIR}/${ARCH}/iso-cd"
-DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
+DEBIAN_ISO_NAME="debian-${VERSION_NUMBER}-${ARCH}-netinst.iso"
 DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
 DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
 
@@ -119,7 +119,11 @@ function wait_for_shutdown {
 function download_iso {
     if [ ! -f "${DEBIAN_ISO_FILE}" ]; then
         info "Downloading ${DEBIAN_ISO_NAME} from ${DEBIAN_ISO_URL} ..."
-        curl --progress-bar -o "${DEBIAN_ISO_FILE}" -L "${DEBIAN_ISO_URL}"
+        if ! curl --progress-bar --output "${DEBIAN_ISO_FILE}" \
+                --location "${DEBIAN_ISO_URL}" --fail
+        then
+            abort "Download failed. Maybe the requested version doesn't exist?"
+        fi
     fi
 }
 
