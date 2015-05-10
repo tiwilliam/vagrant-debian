@@ -62,6 +62,7 @@ DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
 DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
 
 VBGA_DEBIAN_PATH="/usr/share/virtualbox/VBoxGuestAdditions.iso"
+VBGA_ARCH_PATH="/usr/lib/virtualbox/additions/VBoxGuestAdditions.iso"
 VBGA_DARWIN_PATH="/Applications/VirtualBox.app/Contents/MacOS/VBoxGuestAdditions.iso"
 
 ###############################################################################
@@ -77,7 +78,7 @@ function dep_virtualbox {
         abort "Could not find VirtualBox and VBoxManage. Aborting."
     fi
 
-    if [[ ! -f $VBGA_DEBIAN_PATH && ! -f $VBGA_DARWIN_PATH ]]; then
+    if [[ ! -f $VBGA_DEBIAN_PATH && ! -f $VBGA_ARCH_PATH && ! -f $VBGA_DARWIN_PATH ]]; then
         abort "Could not find VirtualBox Guest Additions. Aborting."
     fi
 }
@@ -199,6 +200,8 @@ function vbox_mount_guestadditions {
     info "Installing guest additions..."
     if [ -f $VBGA_DEBIAN_PATH ]; then
         VBOX_GUESTADDITIONS=$VBGA_DEBIAN_PATH
+    elif [ -f $VBGA_ARCH_PATH ]; then
+        VBOX_GUESTADDITIONS=$VBGA_ARCH_PATH
     else
         VBOX_GUESTADDITIONS=$VBGA_DARWIN_PATH
     fi
