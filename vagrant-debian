@@ -28,7 +28,7 @@ esac
 case ${argv[1]} in
     "stable")
         VERSION="current"
-        MIRROR_DIR="release"
+        MIRROR_DIR="release/${VERSION}"
     ;;
     "testing")
         VERSION="testing"
@@ -37,7 +37,7 @@ case ${argv[1]} in
     *)
         if [ -z "${argv[1]}" ] ; then
             VERSION="current"
-            MIRROR_DIR="release"
+            MIRROR_DIR="release/${VERSION}"
         elif [[ ${argv[1]} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
             VERSION="${argv[1]}"
             MIRROR_DIR="archive/${VERSION}"
@@ -55,11 +55,11 @@ FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
 
+VBOX_KEY="${FOLDER_BASE}/vagrantkey"
+
 DEBIAN_MIRROR="cdimage.debian.org"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/mirror/cdimage/${MIRROR_DIR}/${ARCH}/iso-cd"
-DEBIAN_ISO_NAME="debian-${VERSION}-${ARCH}-netinst.iso"
-DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
-DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
+ISO_VERSION=""
 
 VBGA_DEBIAN_PATH="/usr/share/virtualbox/VBoxGuestAdditions.iso"
 VBGA_DARWIN_PATH="/Applications/VirtualBox.app/Contents/MacOS/VBoxGuestAdditions.iso"
@@ -79,6 +79,16 @@ function dep_virtualbox {
 
     if [[ ! -f $VBGA_DEBIAN_PATH && ! -f $VBGA_DARWIN_PATH ]]; then
         abort "Could not find VirtualBox Guest Additions. Aborting."
+    fi
+    
+    if [[ ! -f $VBOX_KEY ]] ; then  
+      info "Vagrant private key not found..."
+      if [[ ! -f "${FOLDER_BASE}/vagrantkey.private" ]] ; then 
+        info "Get insecure key from GITHUB..."
+        wget -c "https://raw.githubusercontent.com/mitchellh/vagrant/master/keys/vagrant" \
+         -O "${FOLDER_BASE}/vagrantkey"
+      fi
+      VBOX_KEY="${FOLDER_BASE}/vagrantkey"
     fi
 }
 
@@ -116,15 +126,56 @@ function wait_for_shutdown {
     done
 }
 
+function get_iso_version {
+  info "Try get stable version number"
+  STATUSCODE="$(curl http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/MD5SUMS -o /dev/null --silent --head --write-out '%{http_code}\n')";
+  if [ "${STATUSCODE}" == "200" ]; then
+    info 'md5sums file found'
+    ISO_VERSION="$(curl -s http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/MD5SUMS | grep 'netinst.iso' | cut -d' ' -f3 | cut -d'-' -f2)"
+    info "Stable version number: ${ISO_VERSION}"
+  else
+    abort "CANT GET MD5SUMS FILE"
+  fi
+}
+
 function download_iso {
+    if [ "${VERSION}" == "current" ]; then
+      get_iso_version
+    else
+      ISO_VERSION="${VERSION}"
+    fi
+    
+    DEBIAN_ISO_NAME="debian-${ISO_VERSION}-${ARCH}-netinst.iso"
+    DEBIAN_ISO_URL="${DEBIAN_URL}/${DEBIAN_ISO_NAME}"
+    DEBIAN_ISO_FILE="${FOLDER_ISO}/${DEBIAN_ISO_NAME}"
+
     if [ ! -f "${DEBIAN_ISO_FILE}" ]; then
         info "Downloading ${DEBIAN_ISO_NAME} from ${DEBIAN_ISO_URL} ..."
-        curl --progress-bar -o "${DEBIAN_ISO_FILE}" -L "${DEBIAN_ISO_URL}"
+        STATUSCODE="$(curl -L ${DEBIAN_ISO_URL} -o /dev/null --silent --head --write-out '%{http_code}\n')";
+        if [ "${STATUSCODE}" == "200" ]; then
+          curl --progress-bar -o "${DEBIAN_ISO_FILE}" -L "${DEBIAN_ISO_URL}"
+        else
+          abort "File not found at server"
+        fi
     fi
 }
 
+function unpack_vbox_additions {
+
+  if [ -f $VBGA_DEBIAN_PATH ]; then
+      VBOX_GUESTADDITIONS=$VBGA_DEBIAN_PATH
+  else
+      VBOX_GUESTADDITIONS=$VBGA_DARWIN_PATH
+  fi
+  
+  mkdir -p "${FOLDER_BUILD}/custom/VBA"
+  if [[ -f "${VBOX_GUESTADDITIONS}" ]]; then
+    7z x "${VBOX_GUESTADDITIONS}" -o"${FOLDER_BUILD}/custom/VBA"
+  fi  
+}
+
 function customize_iso {
-    info "Unpacking ${DEBIAN_ISO_NAME}..."
+    info "Unpacking ${DEBIAN_ISO_NAME}...[${DEBIAN_ISO_FILE}]"
     7z x "${DEBIAN_ISO_FILE}" -o"${FOLDER_BUILD}/custom" > /dev/null
 
     info "Grant write permission..."
@@ -142,11 +193,19 @@ function customize_iso {
 
     cp "${FOLDER_BASE}/scripts/poststrap.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/scripts/bootstrap.sh" "${FOLDER_BUILD}/custom/"
+    cp "${FOLDER_BASE}/scripts/initzerofree.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/config/isolinux.cfg" "${FOLDER_BUILD}/custom/isolinux/"
+
+    cp "${VBOX_KEY}" "${FOLDER_BUILD}/custom/vagrantkey"
 
     info "Setting permissions on bootstrap scripts..."
     chmod 755 "${FOLDER_BUILD}/custom/poststrap.sh"
     chmod 755 "${FOLDER_BUILD}/custom/bootstrap.sh"
+    
+    info "Setting permissions on vagrant key..."
+    chmod 600 "${FOLDER_BUILD}/custom/vagrantkey"
+
+    unpack_vbox_additions
 
     info "Packing ISO files..."
     MKISOFS=$(which mkisofs || which genisoimage)
@@ -224,7 +283,7 @@ vbox_create_vm
 vbox_create_storage
 vbox_start_and_wait_for_shutdown
 
-vbox_mount_guestadditions
+#vbox_mount_guestadditions
 vbox_start_and_wait_for_shutdown
 
 vagrant_package
