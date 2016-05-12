@@ -9,6 +9,15 @@ function usage {
   exit
 }
 
+function get-current-debian-version {
+    PAGE=$(curl -s https://www.debian.org/CD/netinst/)
+    if [[ $PAGE =~ \<a\ href=\"http:\/\/cdimage\.debian\.org\/debian-cd\/([0-9\.]+)\/amd64\/bt-cd\/debian-[0-9\.]+-amd64-netinst\.iso\.torrent ]]; then
+        echo "${BASH_REMATCH[1]}"
+    else
+        abort "Failed to get current stable version number. Aborting."
+    fi
+}
+
 argv=($@)
 
 case ${argv[0]} in
@@ -29,8 +38,7 @@ RELEASE_SPECIFIER="$2"
 case "$RELEASE_SPECIFIER" in
     "" | "stable")
         VERSION="current"
-        # TODO: current version number should be fetched from the net
-        VERSION_NUMBER="8.0.0"
+        VERSION_NUMBER=$(get-current-debian-version)
         MIRROR_DIR="release/${VERSION_NUMBER}"
     ;;
     "testing")
