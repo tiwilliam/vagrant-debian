@@ -131,7 +131,7 @@ function get_iso_version {
   STATUSCODE="$(curl http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/MD5SUMS -o /dev/null --silent --head --write-out '%{http_code}\n')";
   if [ "${STATUSCODE}" == "200" ]; then
     info 'md5sums file found'
-    ISO_VERSION="$(curl -s http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/MD5SUMS | grep 'netinst.iso' | cut -d' ' -f3 | cut -d'-' -f2)"
+    ISO_VERSION="$(curl -s http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/MD5SUMS | grep 'netinst.iso' | grep -v 'mac' | cut -d' ' -f3 | cut -d'-' -f2)"
     info "Stable version number: ${ISO_VERSION}"
   else
     abort "CANT GET MD5SUMS FILE"
