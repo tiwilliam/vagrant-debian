@@ -7,7 +7,9 @@ echo "/swapfile1  none  swap  sw  0  0" >> /etc/fstab
 
 apt-get install -y linux-headers-$(uname -r)
 mount /dev/cdrom /media/cdrom
-sh /media/cdrom/VBoxLinuxAdditions.run
+if [ -f "/media/cdrom/VBoxLinuxAdditions.run" ]; then
+  sh /media/cdrom/VBoxLinuxAdditions.run
+fi
 
 mv /etc/rc.local.bak /etc/rc.local
 shutdown -h now

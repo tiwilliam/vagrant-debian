@@ -1,7 +1,19 @@
 #!/bin/bash
 set -e
-
 . scripts/utils.sh
+
+#CONFIGURATION 
+FOLDER_BASE=$(pwd)
+
+# set path to own public key
+VBOX_KEY="${FOLDER_BASE}/vagrantkey"
+
+# start virtual box headless mode.
+# if you want see working virtual machine set
+# VBOX_GUI=1
+VBOX_GUI=0
+
+## MAIN SCRIPT PART. CHANGE AT OWN RISK
 
 function usage {
   echo "usage: $0 <32|64> [stable|testing|{x.y.z}]"
@@ -50,12 +62,9 @@ esac
 
 BOX="debian-${VERSION}-${ARCH}"
 
-FOLDER_BASE=$(pwd)
 FOLDER_ISO="${FOLDER_BASE}/iso"
 FOLDER_BUILD="${FOLDER_BASE}/build"
 FOLDER_VBOX="${FOLDER_BUILD}/vbox"
-
-VBOX_KEY="${FOLDER_BASE}/vagrantkey"
 
 DEBIAN_MIRROR="cdimage.debian.org"
 DEBIAN_URL="http://${DEBIAN_MIRROR}/mirror/cdimage/${MIRROR_DIR}/${ARCH}/iso-cd"
@@ -64,6 +73,13 @@ ISO_VERSION=""
 VBGA_DEBIAN_PATH="/usr/share/virtualbox/VBoxGuestAdditions.iso"
 VBGA_DARWIN_PATH="/Applications/VirtualBox.app/Contents/MacOS/VBoxGuestAdditions.iso"
 
+if [[ "${VBOX_GUI}" -eq "1" ]] ; then
+  VBOX_RUNTYPE=" --type gui "
+else 
+  VBOX_RUNTYPE=" --type headless "
+fi
+info "VBOX_GIU = ${VBOX_GUI}"
+info "VBOX_RUNTYPE = ${VBOX_RUNTYPE}"
 ###############################################################################
 
 function dep_vagrant {
@@ -83,12 +99,12 @@ function dep_virtualbox {
     
     if [[ ! -f $VBOX_KEY ]] ; then  
       info "Vagrant private key not found..."
-      if [[ ! -f "${FOLDER_BASE}/vagrantkey.private" ]] ; then 
+      if [[ ! -f "${FOLDER_BASE}/vagrantkey.pub" ]] ; then 
         info "Get insecure key from GITHUB..."
-        wget -c "https://raw.githubusercontent.com/mitchellh/vagrant/master/keys/vagrant" \
-         -O "${FOLDER_BASE}/vagrantkey"
+        wget -c "https://raw.githubusercontent.com/mitchellh/vagrant/master/keys/vagrant.pub" \
+         -O "${FOLDER_BASE}/vagrantkey.pub"
       fi
-      VBOX_KEY="${FOLDER_BASE}/vagrantkey"
+      VBOX_KEY="${FOLDER_BASE}/vagrantkey.pub"
     fi
 }
 
@@ -132,6 +148,7 @@ function get_iso_version {
   if [ "${STATUSCODE}" == "200" ]; then
     info 'md5sums file found'
     ISO_VERSION="$(curl -s http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/MD5SUMS | grep 'netinst.iso' | grep -v 'mac' | cut -d' ' -f3 | cut -d'-' -f2)"
+    BOX="debian-${ISO_VERSION}-${ARCH}"
     info "Stable version number: ${ISO_VERSION}"
   else
     abort "CANT GET MD5SUMS FILE"
@@ -194,22 +211,26 @@ function customize_iso {
     cp "${FOLDER_BASE}/scripts/poststrap.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/scripts/bootstrap.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/scripts/initzerofree.sh" "${FOLDER_BUILD}/custom/"
+    
+    ## add custom apps script
+    cp "${FOLDER_BASE}/scripts/custom_apps.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/config/isolinux.cfg" "${FOLDER_BUILD}/custom/isolinux/"
 
-    cp "${VBOX_KEY}" "${FOLDER_BUILD}/custom/vagrantkey"
+    cp "${VBOX_KEY}" "${FOLDER_BUILD}/custom/vagrantkey.pub"
 
     info "Setting permissions on bootstrap scripts..."
     chmod 755 "${FOLDER_BUILD}/custom/poststrap.sh"
     chmod 755 "${FOLDER_BUILD}/custom/bootstrap.sh"
+    chmod 755 "${FOLDER_BUILD}/custom/custom_apps.sh"
     
     info "Setting permissions on vagrant key..."
-    chmod 600 "${FOLDER_BUILD}/custom/vagrantkey"
+    chmod 755 "${FOLDER_BUILD}/custom/vagrantkey.pub"
 
     unpack_vbox_additions
 
     info "Packing ISO files..."
     MKISOFS=$(which mkisofs || which genisoimage)
-    $MKISOFS -r -V "Custom Debian Install CD" -cache-inodes -quiet -J -l \
+    $MKISOFS -r -V "Custom Debian ${ISO_VERSION} Install CD" -cache-inodes -quiet -J -l \
         -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
         -boot-load-size 4 -boot-info-table -o "${FOLDER_BUILD}/custom.iso" \
         "${FOLDER_BUILD}/custom"
@@ -246,7 +267,7 @@ function vbox_create_storage {
 
 function vbox_start_and_wait_for_shutdown {
     info "Booting VM..."
-    VBoxManage startvm "${BOX}"
+    VBoxManage startvm "${BOX}" ${VBOX_RUNTYPE}
     wait_for_shutdown
 }
 
