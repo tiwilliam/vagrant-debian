@@ -34,7 +34,7 @@ or
 
 ## Configuration
 
-You can VagrantKey options in `vagrant-debian` file :
+You can set VagrantKey options in `vagrant-debian` file :
 
     VBOX_KEY="${FOLDER_BASE}/vagrantkey"
 
