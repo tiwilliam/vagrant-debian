@@ -73,6 +73,8 @@ ISO_VERSION=""
 VBGA_DEBIAN_PATH="/usr/share/virtualbox/VBoxGuestAdditions.iso"
 VBGA_DARWIN_PATH="/Applications/VirtualBox.app/Contents/MacOS/VBoxGuestAdditions.iso"
 
+DEBUG_ECHO=0 #set sedug console output
+
 if [[ "${VBOX_GUI}" -eq "1" ]] ; then
   VBOX_RUNTYPE=" --type gui "
 else 
@@ -82,9 +84,22 @@ info "VBOX_GIU = ${VBOX_GUI}"
 info "VBOX_RUNTYPE = ${VBOX_RUNTYPE}"
 ###############################################################################
 
+function decho {
+  if [ "${DEBUG_ECHO}" == "1" ]; then
+    debugecho "$1"
+  fi
+}
+
+
 function dep_vagrant {
     if [[ -z $(which vagrant) ]]; then
         abort "Could not find Vagrant. Aborting."
+    fi
+}
+
+function dep_fakeroot {
+    if [[ -z $(which fakeroot) ]]; then
+        abort "Could not find fakeroot. Aborting."
     fi
 }
 
@@ -202,12 +217,14 @@ function customize_iso {
     FOLDER_INSTALL=$(ls -1 -d "${FOLDER_BUILD}/custom/install."* | sed 's/^.*\///')
     cp -r "${FOLDER_BUILD}/custom/${FOLDER_INSTALL}/"* "${FOLDER_BUILD}/custom/install/"
 
+    decho " -- Copy preseed.cfg to initrd"
     pushd "${FOLDER_BUILD}/initrd"
         gunzip -c "${FOLDER_BUILD}/custom/install/initrd.gz" | $(which fakeroot) cpio -id
         cp "${FOLDER_BASE}/config/preseed.cfg" "${FOLDER_BUILD}/initrd/preseed.cfg"
         find . | $(which fakeroot) cpio --create --format='newc' | gzip > "${FOLDER_BUILD}/custom/install/initrd.gz"
     popd
 
+    decho " -- Copy bootstrap, poststrap, initserofree scripts to custom image" 
     cp "${FOLDER_BASE}/scripts/poststrap.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/scripts/bootstrap.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/scripts/initzerofree.sh" "${FOLDER_BUILD}/custom/"
@@ -216,6 +233,7 @@ function customize_iso {
     cp "${FOLDER_BASE}/scripts/custom_apps.sh" "${FOLDER_BUILD}/custom/"
     cp "${FOLDER_BASE}/config/isolinux.cfg" "${FOLDER_BUILD}/custom/isolinux/"
 
+    decho " -- copy vagrantkey"	
     cp "${VBOX_KEY}" "${FOLDER_BUILD}/custom/vagrantkey.pub"
 
     info "Setting permissions on bootstrap scripts..."
@@ -288,23 +306,55 @@ function vagrant_package {
 
 ###############################################################################
 
+decho 'run cleaning'
 clean
 
+###
+
+decho "check dependency vagrant"
 dep_vagrant
+
+decho "check dependency virtualbox"
 dep_virtualbox
+
+decho "check dependency 7zip"
 dep_7z
+
+decho "check dependency mkisofs | genisoimage"
 dep_mkisofs
 
+decho "check dependency fakeroot "
+dep_fakeroot
+
+###
+
+decho "uregister previous vagrant box with same name"
 vbox_unregister
 
+###
+
+decho "uregister previous vagrant box with same name"
 download_iso
+
+decho "uregister previous vagrant box with same name"
 customize_iso
 
+###
+
+decho "create virtualbox image"
 vbox_create_vm
+
+decho "create storage (HDD for image)"
 vbox_create_storage
+
+decho "start and bootstrap image. wait until install done"
 vbox_start_and_wait_for_shutdown
 
 #vbox_mount_guestadditions
+decho "build vbox guest addition dkms for kernel. wait until done."
 vbox_start_and_wait_for_shutdown
 
+###
+
+decho "pack image. well done."
 vagrant_package

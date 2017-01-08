@@ -22,3 +22,7 @@ function info {
 function warn {
     echo -e "${txtylw}WARN: $1${txtrst}"
 }
+
+function debugecho {
+    echo -e "${txtcyn}DEBUG: $1${txtrst}"
+}
