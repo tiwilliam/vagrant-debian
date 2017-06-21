@@ -10,4 +10,15 @@ mount /dev/cdrom /media/cdrom
 sh /media/cdrom/VBoxLinuxAdditions.run
 
 mv /etc/rc.local.bak /etc/rc.local
-shutdown -h now
+
+# Oldstable
+if [ -x /sbin/shudown ]; then
+    /sbin/shutdown -h now
+fi
+
+# Stable +
+if [ -x /bin/systemctl ]; then
+    /bin/systemctl poweroff
+fi
+
+# Otherwise shutdown the machine manually
