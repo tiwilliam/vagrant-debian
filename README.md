@@ -15,7 +15,7 @@ Install [Vagrant](http://www.vagrantup.com/downloads.html) and
 
 ## Debian Stretch Guide
 
-Foloow the [Virtualbox Debian wiki page](https://wiki.debian.org/VirtualBox).
+Follow the [Virtualbox Debian wiki page](https://wiki.debian.org/VirtualBox).
 
     apt-get install fakeroot p7zip-full genisoimage vagrant virtualbox-5.1
     ./vagrant-debian 64
