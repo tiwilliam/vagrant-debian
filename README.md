@@ -13,7 +13,14 @@ Install [Vagrant](http://www.vagrantup.com/downloads.html) and
     brew install fakeroot dvdrtools p7zip
     ./vagrant-debian 64
 
-## Debian Guide
+## Debian Stretch Guide
+
+Foloow the [Virtualbox Debian wiki page](https://wiki.debian.org/VirtualBox).
+
+    apt-get install fakeroot p7zip-full genisoimage vagrant virtualbox-5.1
+    ./vagrant-debian 64
+
+## Debian Jessie Guide
 
     apt-get install fakeroot p7zip-full genisoimage vagrant virtualbox virtualbox-guest-additions-iso
     ./vagrant-debian 64

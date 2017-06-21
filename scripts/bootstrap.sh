@@ -15,7 +15,11 @@ gem install ohai
 gem install chef
 
 # Install guest additions on next boot
-cp /etc/rc.{local,local.bak} && cp /root/poststrap.sh /etc/rc.local
+# There is no /etc/rc.local in Debian Stretch
+if [ -f /etc/rc.local ]; then
+    cp /etc/rc.{local,local.bak}
+fi
+cp /root/poststrap.sh /etc/rc.local
 
 # Wait for disk
 sync
