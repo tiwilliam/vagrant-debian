@@ -5,7 +5,7 @@ You can set version to *stable*, *testing* or a specific version like *6.0.10*.
 It will download the network installer, install Debian using a preseed
 config, install guest additions and export it to the Vagrant box format.
 
-## Mac OS X Guide
+## macOS Guide
 
 Install [Vagrant](http://www.vagrantup.com/downloads.html) and
 [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
